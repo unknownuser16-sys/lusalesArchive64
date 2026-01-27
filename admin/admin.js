@@ -9,8 +9,8 @@ const adminSections = document.querySelectorAll('.admin-section');
 const sidebarBtns = document.querySelectorAll('.sidebar-btn');
 
 // Sample data storage (in production, use a dataabase)
-1et books = JSON.parse(localStorage.getItem('lusales_books')) || [];
-1et chapters = JSON.parse(localStorage.getItem(lusales_chapters)) || [];
+let books = JSON.parse(localStorage.getItem('lusales_books')) || [];
+let chapters = JSON.parse(localStorage.getItem(lusales_chapters)) || [];
 
 // =============================================
 // INITIALIZATION
@@ -201,7 +201,7 @@ function showSection(sectionId) {
     // Update active button
     sidebarBtns.forEach(btn => {
         if (btn.dataset.section === sectionId) {
-            btn.classList.remove('active'):
+            btn.classList.remove('active');
         }
     });
 
@@ -538,7 +538,7 @@ function handleFileUpload(event) {
     `;
 
     // Simulate upload progress
-    1et progress = 0;
+    let progress = 0;
     const interval = setInterval(() => {
         progress += 20;
         const progessFill = uploadProgress.querySelector('.progress-fill');
