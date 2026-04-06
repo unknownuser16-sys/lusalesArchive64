@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lusales Archive</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
-    <!-- FIX: 'merriweather:wgt' -> 'Merriweather:wght' (correct font name and weight param) -->
 </head>
 <body>
+
     <!-- Navigation -->
     <nav class="navbar">
         <div class="container">
@@ -26,45 +25,44 @@
                 </div>
             </div>
             <button class="mobile-menu-btn">
-                <i class="fas fa-bars"></i> <!-- FIX: 'fa-bar' -> 'fa-bars' -->
+                <i class="fas fa-bars"></i>
             </button>
         </div>
     </nav>
 
     <!-- Main Content -->
     <main class="container">
+
         <section class="hero" id="home">
             <div class="hero-content">
-                <h2>Welcome to the Archive</h2> <!-- FIX: 'Aechive' -> 'Archive' -->
-                <p>A collection of stories and chapters, updated regularly.</p> <!-- FIX: 'collections' -> 'collection' -->
+                <h2>Welcome to the Archive</h2>
+                <p>A collection of stories and chapters, updated regularly.</p>
+                <div class="hero-divider">— ✦ —</div>
             </div>
         </section>
 
         <!-- Featured Books -->
-        <section class="featured-books">
+        <section class="featured-books" id="library">
             <h2><i class="fas fa-star"></i> Featured Books</h2>
-            <div class="books-grid" id="featuredBooks"> <!-- FIX: 'featuredbooks' -> 'featuredBooks' (consistent casing) -->
-                <!-- Books will be loaded here by JavaScript -->
-            </div>
+            <div class="books-grid" id="featuredBooks"></div>
         </section>
 
         <!-- Recent Chapters -->
         <section class="recent-chapters" id="recent">
-            <h2><i class="fas fa-clock"></i> Recent Updates</h2> <!-- FIX: 'Update' -> 'Updates' -->
-            <div class="chapters-list" id="recentChapters">
-                <!-- Recent chapters will be loaded here -->
-            </div>
+            <h2><i class="fas fa-clock"></i> Recent Updates</h2>
+            <div class="chapters-list" id="recentChapters"></div>
         </section>
+
     </main>
 
     <!-- Footer -->
     <footer>
         <div class="container">
             <p>&copy; 2025 Lusales Archive. All rights reserved.</p>
-            <div class="footer-links"> <!-- FIX: 'footer-link' -> 'footer-links' -->
+            <div class="footer-links">
                 <a href="#privacy">Privacy</a>
                 <a href="#terms">Terms</a>
-                <a href="#contact">Contact</a> <!-- FIX: 'contact' -> '#contact' (missing hash) -->
+                <a href="#contact">Contact</a>
             </div>
         </div>
     </footer>
@@ -75,14 +73,12 @@
             <div class="reader-header">
                 <h3 id="chapterTitle">Chapter Title</h3>
                 <div class="reader-controls">
-                    <button class="zoom-btn" data-action="zoom-in"><i class="fas fa-search-plus"></i></button> <!-- FIX: <buttom> -> <button> -->
+                    <button class="zoom-btn" data-action="zoom-in"><i class="fas fa-search-plus"></i></button>
                     <button class="zoom-btn" data-action="zoom-out"><i class="fas fa-search-minus"></i></button>
                     <button class="close-reader"><i class="fas fa-times"></i></button>
                 </div>
             </div>
-            <div class="reader-content" id="readerContent">
-                <!-- Chapter content will be loaded here -->
-            </div>
+            <div class="reader-content" id="readerContent"></div>
             <div class="reader-navigation">
                 <button id="prevChapter"><i class="fas fa-chevron-left"></i> Previous</button>
                 <button id="nextChapter">Next <i class="fas fa-chevron-right"></i></button>
@@ -90,6 +86,6 @@
         </div>
     </div>
 
-    <script src="js/main.js"></script>
+    <script src="main.js"></script>
 </body>
 </html>
