@@ -6,7 +6,8 @@
     <title>Lusales Archive</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=merriweather:wgt@300;400;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <!-- FIX: 'merriweather:wgt' -> 'Merriweather:wght' (correct font name and weight param) -->
 </head>
 <body>
     <!-- Navigation -->
@@ -20,58 +21,53 @@
                 <a href="#library">Library</a>
                 <a href="#recent">Recent</a>
                 <div class="search-box">
-                    <input type="text" placeholder="search books...">
+                    <input type="text" placeholder="Search books...">
                     <button><i class="fas fa-search"></i></button>
                 </div>
             </div>
             <button class="mobile-menu-btn">
-                <i class="fas fa-bar"></i>
+                <i class="fas fa-bars"></i> <!-- FIX: 'fa-bar' -> 'fa-bars' -->
             </button>
         </div>
     </nav>
-
 
     <!-- Main Content -->
     <main class="container">
         <section class="hero" id="home">
             <div class="hero-content">
-                 <h2>Welcome to the Aechive</h2>
-                 <p>A collections of stories and chapters, updated regularly.</p>
+                <h2>Welcome to the Archive</h2> <!-- FIX: 'Aechive' -> 'Archive' -->
+                <p>A collection of stories and chapters, updated regularly.</p> <!-- FIX: 'collections' -> 'collection' -->
             </div>
         </section>
-
 
         <!-- Featured Books -->
         <section class="featured-books">
             <h2><i class="fas fa-star"></i> Featured Books</h2>
-            <div class="books-grid" id="featuredbooks">
-                <!-- Books will be loaded here by javaScript-->
+            <div class="books-grid" id="featuredBooks"> <!-- FIX: 'featuredbooks' -> 'featuredBooks' (consistent casing) -->
+                <!-- Books will be loaded here by JavaScript -->
             </div>
         </section>
-
 
         <!-- Recent Chapters -->
         <section class="recent-chapters" id="recent">
-            <h2><i class="fas fa-clock"></i> Recent Update</h2>
+            <h2><i class="fas fa-clock"></i> Recent Updates</h2> <!-- FIX: 'Update' -> 'Updates' -->
             <div class="chapters-list" id="recentChapters">
-                <!-- Recent Chapters will be loaded here -->
+                <!-- Recent chapters will be loaded here -->
             </div>
         </section>
     </main>
-
 
     <!-- Footer -->
     <footer>
         <div class="container">
             <p>&copy; 2025 Lusales Archive. All rights reserved.</p>
-            <div class="footer-link">
+            <div class="footer-links"> <!-- FIX: 'footer-link' -> 'footer-links' -->
                 <a href="#privacy">Privacy</a>
                 <a href="#terms">Terms</a>
-                <a href="contact">Contact</a>
+                <a href="#contact">Contact</a> <!-- FIX: 'contact' -> '#contact' (missing hash) -->
             </div>
         </div>
     </footer>
-
 
     <!-- Reader Modal -->
     <div class="reader-modal" id="readerModal">
@@ -79,13 +75,13 @@
             <div class="reader-header">
                 <h3 id="chapterTitle">Chapter Title</h3>
                 <div class="reader-controls">
-                    <buttom class="zoom-btn" data-action="zoom-in"><i class="fas fa-search-plus"></i></buttom>
+                    <button class="zoom-btn" data-action="zoom-in"><i class="fas fa-search-plus"></i></button> <!-- FIX: <buttom> -> <button> -->
                     <button class="zoom-btn" data-action="zoom-out"><i class="fas fa-search-minus"></i></button>
                     <button class="close-reader"><i class="fas fa-times"></i></button>
                 </div>
             </div>
             <div class="reader-content" id="readerContent">
-                 <!-- Chapter content will be loaded here -->
+                <!-- Chapter content will be loaded here -->
             </div>
             <div class="reader-navigation">
                 <button id="prevChapter"><i class="fas fa-chevron-left"></i> Previous</button>
@@ -93,7 +89,6 @@
             </div>
         </div>
     </div>
-
 
     <script src="js/main.js"></script>
 </body>
