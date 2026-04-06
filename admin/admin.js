@@ -1,16 +1,14 @@
 // ADMIN PANEL - LUSALES ARCHIVE
-const SECRET_ADMIN_KEY = "deep-speed-2005"; 
+const SECRET_ADMIN_KEY = "deep-speed-2005";
 const ADMIN_ACCESS_COOKIE = "admin_access_granted";
 
-//DOM Elements
-const loginForm = document.getElementById('loginForm');
-const adminDashboard = document.getElementById('adminDashboard');
+// DOM Elements
 const adminSections = document.querySelectorAll('.admin-section');
 const sidebarBtns = document.querySelectorAll('.sidebar-btn');
 
-// Sample data storage (in production, use a dataabase)
+// Data storage (in production, use a database)
 let books = JSON.parse(localStorage.getItem('lusales_books')) || [];
-let chapters = JSON.parse(localStorage.getItem(lusales_chapters)) || [];
+let chapters = JSON.parse(localStorage.getItem('lusales_chapters')) || [];  // FIX: added quotes around key
 
 // =============================================
 // INITIALIZATION
@@ -24,26 +22,31 @@ document.addEventListener('DOMContentLoaded', () => {
 // =============================================
 // SECURITY & ACCESS CONTROL
 // =============================================
-function checkAdminAccess() {
-    // check if coming from secret URL
-    const ur1Params = new URLSearchParams(window.location.search);
-    const key = ur1Params.get('key');
 
-    // Check if previously logged in (valid for 24 hours)
+function checkAdminAccess() {
+    const urlParams = new URLSearchParams(window.location.search);  // FIX: ur1Params -> urlParams
+    const key = urlParams.get('key');
+
     const storedAccess = localStorage.getItem(ADMIN_ACCESS_COOKIE);
     const loginTime = localStorage.getItem('admin_login_time');
     const isLoginValid = loginTime &&
         (Date.now() - parseInt(loginTime)) < (24 * 60 * 60 * 1000);
-    
-    // Grant access if either condition is met
+
     if (key === SECRET_ADMIN_KEY || (storedAccess === 'true' && isLoginValid)) {
         localStorage.setItem(ADMIN_ACCESS_COOKIE, 'true');
         localStorage.setItem('admin_login_time', Date.now().toString());
         showDashboard();
-        localBooksForAdmin();
+        loadBooksForAdmin();  // FIX: localBooksForAdmin -> loadBooksForAdmin
     } else {
         showAccessDenied();
     }
+}
+
+function showDashboard() {
+    const loginForm = document.getElementById('loginForm');
+    const adminDashboard = document.getElementById('adminDashboard');
+    if (loginForm) loginForm.style.display = 'none';
+    if (adminDashboard) adminDashboard.style.display = 'block';
 }
 
 function showAccessDenied() {
@@ -51,15 +54,14 @@ function showAccessDenied() {
         <div class="access-denied">
             <div class="access-form">
                 <h2><i class="fas fa-lock"></i> Admin Access Required</h2>
-                <p> This area is restricted to authorized personnel only.</p>
+                <p>This area is restricted to authorized personnel only.</p>
                 <div class="input-group">
-                    <input type="password" id="accessCode"
-                           Placeholder="Enter admin access code">
+                    <input type="password" id="accessCode" placeholder="Enter admin access code">
                     <button onclick="verifyAccess()">
-                        <i class=fas fa-sign-in-alt"></i> Enter
+                        <i class="fas fa-sign-in-alt"></i> Enter
                     </button>
                 </div>
-                <P class="error-msg" id="errorMsg">
+                <p class="error-msg" id="errorMsg">
                     <i class="fas fa-exclamation-circle"></i> Invalid access code
                 </p>
                 <p class="hint">Contact the site administrator if you need access.</p>
@@ -68,7 +70,7 @@ function showAccessDenied() {
             <style>
                 body {
                     margin: 0;
-                    padding: o;
+                    padding: 0;                              /* FIX: 'o' -> '0' */
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                     min-height: 100vh;
                     display: flex;
@@ -79,18 +81,18 @@ function showAccessDenied() {
                 .access-denied {
                     width: 100%;
                     max-width: 500px;
-                    padding: 20px
+                    padding: 20px;
                 }
                 .access-form {
                     background: white;
                     padding: 2.5rem;
                     border-radius: 15px;
-                    box-shadow: 0 20px 40px rgba(0,0,0,0,3);
-                    text-align: center
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.3);  /* FIX: 0,3 -> 0.3 */
+                    text-align: center;
                 }
                 .access-form h2 {
                     color: #2c3e50;
-                    margin-buttom: 1rem;
+                    margin-bottom: 1rem;                     /* FIX: margin-buttom typo */
                     font-family: 'Merriweather', serif;
                 }
                 .access-form > p {
@@ -101,17 +103,21 @@ function showAccessDenied() {
                 .input-group {
                     display: flex;
                     gap: 10px;
-                    margin-bottom 1.5rem;
+                    margin-bottom: 1.5rem;                   /* FIX: missing colon */
                 }
-                .input-group inout {
+                .input-group input {                         /* FIX: 'inout' typo */
                     flex: 1;
-                    padding: 1rem
+                    padding: 1rem;
                     border: 2px solid #ddd;
                     border-radius: 8px;
                     font-size: 1rem;
-                    transition border-color: 0.3s;
+                    transition: border-color 0.3s;           /* FIX: missing colon */
+                    outline: none;
                 }
                 .input-group input:focus {
+                    border-color: #3498db;                   /* FIX: was applying button styles to input focus */
+                }
+                .input-group button {                        /* FIX: 'input-ground buttom' typos */
                     background: #3498db;
                     color: white;
                     border: none;
@@ -120,18 +126,18 @@ function showAccessDenied() {
                     cursor: pointer;
                     font-size: 1rem;
                     display: flex;
-                    align-item: center;
+                    align-items: center;                     /* FIX: align-item -> align-items */
                     gap: 8px;
                     transition: background 0.3s;
                 }
-                .input-ground buttom:hover {
+                .input-group button:hover {
                     background: #2980b9;
                 }
                 .error-msg {
-                    color: #e74c3c
-                    dispaly: none;
+                    color: #e74c3c;
+                    display: none;                           /* FIX: 'dispaly' typo */
                     align-items: center;
-                    justify-content: center
+                    justify-content: center;
                     gap: 8px;
                     font-size: 0.9rem;
                 }
@@ -142,6 +148,11 @@ function showAccessDenied() {
                     border-top: 1px solid #eee;
                     padding-top: 1rem;
                 }
+                @keyframes shake {                           /* FIX: @Keyframes -> @keyframes */
+                    0%, 100% { transform: translateX(0); }
+                    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                    20%, 40%, 60%, 80% { transform: translateX(5px); }
+                }                                            /* FIX: added missing closing brace */
             </style>
         </div>
     `;
@@ -154,24 +165,22 @@ function verifyAccess() {
     if (code === SECRET_ADMIN_KEY) {
         localStorage.setItem(ADMIN_ACCESS_COOKIE, 'true');
         localStorage.setItem('admin_login_time', Date.now().toString());
-        location.reload(); //Reload to show dashboard
+        location.reload();
     } else {
         errorMsg.style.display = 'flex';
-        //Shake animation for wrong password
         document.getElementById('accessCode').style.animation = 'shake 0.5s';
-        setTimeout(()  => {
+        setTimeout(() => {
             document.getElementById('accessCode').style.animation = '';
         }, 500);
 
-        //Add shake animation to CSS
         if (!document.querySelector('#shake-animation')) {
             const style = document.createElement('style');
             style.id = 'shake-animation';
             style.textContent = `
-                @Keyframes shake {
-                   0%, 100% { transform: translateX(0); }
-                   10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-                   20%, 40%, 60%, 80% { transform: translateX(5px); 
+                @keyframes shake {
+                    0%, 100% { transform: translateX(0); }
+                    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                    20%, 40%, 60%, 80% { transform: translateX(5px); }
                 }
             `;
             document.head.appendChild(style);
@@ -185,8 +194,8 @@ function verifyAccess() {
 
 function logout() {
     localStorage.removeItem(ADMIN_ACCESS_COOKIE);
-    localStorage.removeItem('admin_login_item');
-    location.href = '../index.html'; //Redirect to main site
+    localStorage.removeItem('admin_login_time');  // FIX: 'admin_login_item' -> 'admin_login_time'
+    location.href = '../index.html';
 }
 
 function showSection(sectionId) {
@@ -195,29 +204,36 @@ function showSection(sectionId) {
         section.style.display = 'none';
     });
 
-    //Show selected section
-    document.getElementById(`${sectionId}Section`).style.display = 'block';
+    // Show selected section
+    const target = document.getElementById(`${sectionId}Section`);
+    if (target) target.style.display = 'block';
 
-    // Update active button
+    // Update active button  FIX: was removing 'active' instead of adding it
     sidebarBtns.forEach(btn => {
+        btn.classList.remove('active');
         if (btn.dataset.section === sectionId) {
-            btn.classList.remove('active');
+            btn.classList.add('active');
         }
     });
 
-    // Load appropraite data
+    // Load appropriate data
     if (sectionId === 'books') {
-        localBooksForAdmin();
+        loadBooksForAdmin();
     } else if (sectionId === 'chapters') {
         loadChaptersForAdmin();
     }
 }
 
-function localBooksForAdmin() {
-    const booklist = document.getElementById('bookslist');
+// ============================================
+// BOOK MANAGEMENT
+// ============================================
+
+function loadBooksForAdmin() {                             // FIX: renamed from 'localBooksForAdmin'
+    const booksList = document.getElementById('booksList');
+    if (!booksList) return;
     booksList.innerHTML = '';
 
-    if (books.lenght === 0) {
+    if (books.length === 0) {                              // FIX: 'lenght' -> 'length'
         booksList.innerHTML = `
             <div class="empty-state">
                 <i class="fas fa-book"></i>
@@ -227,17 +243,17 @@ function localBooksForAdmin() {
         return;
     }
 
-    books.forEach((books, index) => {
-        const BookItem = document.createElement('div');
-        BookItem.className = 'book-item';
-        BookItem.innerHTML = `
+    books.forEach((book, index) => {                       // FIX: (books, index) -> (book, index)
+        const bookItem = document.createElement('div');   // FIX: 'BookItem' -> 'bookItem'
+        bookItem.className = 'book-item';
+        bookItem.innerHTML = `
             <div>
-                <h4>$(book.title)</h>
-                <p class="book-meta">by $(book.author)</p>
-                <p class="book-desc">$(book.description || 'No description)</p>
-                <small>Created: $(new Date(book.createdAt).toLocalDateString())</small>
+                <h4>${book.title}</h4>                    <!-- FIX: $(book.title) -> \${book.title}, fixed closing tag -->
+                <p class="book-meta">by ${book.author}</p>  <!-- FIX: $ -> \${ } -->
+                <p class="book-desc">${book.description || 'No description'}</p>  <!-- FIX: missing closing quote -->
+                <small>Created: ${new Date(book.createdAt).toLocaleDateString()}</small>  <!-- FIX: toLocalDateString -> toLocaleDateString -->
             </div>
-            <div class="book-action">
+            <div class="book-actions">
                 <button class="edit-btn" onclick="editBook(${index})" title="Edit">
                     <i class="fas fa-edit"></i>
                 </button>
@@ -246,12 +262,88 @@ function localBooksForAdmin() {
                 </button>
             </div>
         `;
-        booksList.appendChild(BookItem);
+        booksList.appendChild(bookItem);
     });
 }
+
+function showAddBookForm() {
+    document.getElementById('addBookModal').style.display = 'flex';
+}
+
+function addBook() {
+    const title = document.getElementById('bookTitle').value.trim();
+    const author = document.getElementById('bookAuthor').value.trim();
+    const description = document.getElementById('bookDescription').value.trim();
+
+    if (!title || !author) {
+        alert('Please fill in the title and author fields');
+        return;
+    }
+
+    const newBook = {
+        id: Date.now(),                                    // FIX: date.now() -> Date.now()
+        title,
+        author,
+        description,
+        coverColor: `linear-gradient(45deg, #${Math.floor(Math.random()*16777215).toString(16)}, #${Math.floor(Math.random()*16777215).toString(16)})`,  // FIX: missing .toString(16) and closing paren
+        createdAt: new Date().toISOString()
+    };
+
+    books.push(newBook);
+    localStorage.setItem('lusales_books', JSON.stringify(books));
+    closeModal('addBookModal');                            // FIX: closedModal -> closeModal
+    loadBooksForAdmin();
+    alert(`Book "${title}" added successfully!`);          // FIX: single quotes -> backticks for interpolation
+
+    document.getElementById('bookTitle').value = '';
+    document.getElementById('bookAuthor').value = '';
+    document.getElementById('bookDescription').value = '';
+}
+
+function editBook(index) {                                 // FIX: aditBook -> editBook
+    const book = books[index];
+    const newTitle = prompt('Edit book title:', book.title);
+    if (newTitle) {
+        const newAuthor = prompt('Edit author:', book.author);
+        const newDesc = prompt('Edit description:', book.description);
+
+        books[index] = {
+            ...book,
+            title: newTitle,
+            author: newAuthor,
+            description: newDesc
+        };
+
+        localStorage.setItem('lusales_books', JSON.stringify(books));
+        loadBooksForAdmin();
+        alert('Book updated successfully!');
+    }
+}
+
+function deleteBook(index) {
+    if (confirm(`Are you sure you want to delete "${books[index].title}"? This will also delete all its chapters!`)) {  // FIX: backticks for interpolation
+        const bookId = books[index].id;                    // FIX: 'BookId' -> 'bookId' (consistent casing)
+
+        books.splice(index, 1);
+
+        // Delete associated chapters  FIX: chapter.BookId -> chapter.bookId
+        chapters = chapters.filter(chapter => chapter.bookId !== bookId);
+
+        localStorage.setItem('lusales_books', JSON.stringify(books));
+        localStorage.setItem('lusales_chapters', JSON.stringify(chapters));
+
+        loadBooksForAdmin();
+        alert('Book deleted successfully!');
+    }
+}
+
+// ============================================
+// CHAPTER MANAGEMENT
+// ============================================
 
 function loadChaptersForAdmin() {
     const bookSelect = document.getElementById('bookSelect');
+    if (!bookSelect) return;
     bookSelect.innerHTML = '<option value="">Select a book...</option>';
 
     books.forEach(book => {
@@ -261,27 +353,16 @@ function loadChaptersForAdmin() {
         bookSelect.appendChild(option);
     });
 
-    loadchapterList();
+    loadChapterList();                                     // FIX: loadchapterList -> loadChapterList (consistent naming)
 }
 
-function loadchapterList() {
+function loadChapterList() {                               // FIX: renamed consistently
     const bookSelect = document.getElementById('bookSelect');
-    bookSelect.innerHTML = '<option value="">Select a book...</option>';
-
-    books.forEach(book => {
-        const option = document.createElement('option');
-        option.value = book.id;
-        option.textContent = book.title;
-        bookSelect.appendChild(option);
-    });
-
-    loadchapterList();
-}
-
-function loadchapterList() {
-    const selectedBookId = document.getElementById('bookselect').value;
     const chaptersList = document.getElementById('adminChaptersList');
+    if (!chaptersList) return;
     chaptersList.innerHTML = '';
+
+    const selectedBookId = bookSelect ? parseInt(bookSelect.value) : null;  // FIX: 'bookselect' -> 'bookSelect'
 
     if (!selectedBookId) {
         chaptersList.innerHTML = `
@@ -290,7 +371,19 @@ function loadchapterList() {
                 <p>Select a book to view its chapters</p>
             </div>
         `;
-        return
+        return;
+    }
+
+    const bookChapters = chapters.filter(ch => ch.bookId === selectedBookId);
+
+    if (bookChapters.length === 0) {
+        chaptersList.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-file-alt"></i>
+                <p>No chapters yet for this book.</p>
+            </div>
+        `;
+        return;
     }
 
     bookChapters.forEach((chapter, index) => {
@@ -304,10 +397,10 @@ function loadchapterList() {
             </div>
             <div class="chapter-actions">
                 <button class="edit-btn" onclick="editChapter(${index})" title="Edit">
-                    <i class=fas fas-edit"></i>
+                    <i class="fas fa-edit"></i>             <!-- FIX: 'fas fas-edit' -> 'fas fa-edit', missing quote -->
                 </button>
                 <button class="delete-btn" onclick="deleteChapter(${index})" title="Delete">
-                    <i class=fas fas-trash"></i>
+                    <i class="fas fa-trash"></i>            <!-- FIX: same icon class fix -->
                 </button>
             </div>
         `;
@@ -315,86 +408,8 @@ function loadchapterList() {
     });
 }
 
-// ============================================
-// BOOK MANAGEMENT
-// ============================================
-
-function addBook() {
-    const title = document.getElementById('bookTitle').value.trim();
-    const author = document.getElementById('bookAuthor').value.trim();
-    const description = document.getElementById('bookDescription').value.trim();
-
-    if (!title || !author) {
-        alert('PLease fill in the title and author fields');
-        return
-    }
-
-    const neewBook = {
-        id: date.now(),
-        title,
-        author,
-        description,
-        coverColo: 'linear-gradient(45deg, #${Math.floor(Math.random()*16777215).toString(16)}, #${Math.floor(Math.random()*16777215(16)})',
-        createdAt: new Date().toISOString()
-    };
-
-    books.push(neewBook);
-    localStorage.setItem('lusales_books', JSON.stringify(books));
-    closedModal('addBookModal');
-    loadBooksForAdmin();
-    alert('Book "${title}" added successfullyy!');
-
-    // Clear form
-    document.getElementById('bookTitle').value = '';
-    document.getElementById('bookAuthor').value = '';
-    document.getElementById('bookDescription').value = '';
-}
-
-function aditBook(index) {
-    const book = books[index];
-    const newTitle = prompt('Edit book title:', book.title)
-    if (newTitle) {
-        const newAuthor = prompt('Edit author:', book.author);
-        const newDesc = prompt('Edit description', book.description);
-
-        books[index] = {
-            ...book,
-            title: newTitle,
-            author: newAuthor,
-            description: newDesc
-        };
-
-        localStorage.setItem('lusales_books', JSON.stringify(books));
-        loadBooksForAdmin();
-        alert('Book update successfully!');
-    }
-}
-
-function deleteBook(index) {
-    if (confirm('Are you sure you want to delete "${books[index].title}"? This will also delete all the chapters!')) {
-        const BookId = books[index].id;
-
-        //Delete the book
-        books.splice(index, 1);
-
-        //Delete associated chapters
-        chapters = chapters.filter(chapter => chapter.BookId !== bookId);
-
-        //Save to localstorage
-        localStorage.setItem('lusales_books',JSON.stringify(books));
-        localStorage.setItem('lusales_chapters', JSON.stringify(chapters));
-
-        loadBooksForAdmin();
-        alert('Book deleted successfully!');
-    }
-}
-
-// ============================================
-// CHAPTER MANAGEMENT
-// ============================================
-
 function showAddChapterForm() {
-    const selectedBookId = document.getElementById('bookSelected').value;
+    const selectedBookId = document.getElementById('bookSelect').value;  // FIX: 'bookSelected' -> 'bookSelect'
 
     if (!selectedBookId) {
         alert('Please select a book first');
@@ -409,11 +424,11 @@ function addChapter() {
     const title = document.getElementById('chapterTitleInput').value.trim();
     const content = document.getElementById('chapterContent').value.trim();
     const date = document.getElementById('chapterDate').value;
-    const bookId = document.getElementById('bookSelected').value;
+    const bookId = document.getElementById('bookSelect').value;  // FIX: 'bookSelected' -> 'bookSelect'
 
     if (!title || !content || !bookId) {
         alert('Please fill in all required fields');
-
+        return;                                             // FIX: was missing return after alert
     }
 
     const newChapter = {
@@ -421,44 +436,43 @@ function addChapter() {
         bookId: parseInt(bookId),
         title,
         content,
-        date: date|| new Date().toISOString().split('T')[0]
+        date: date || new Date().toISOString().split('T')[0]
     };
 
     chapters.push(newChapter);
     localStorage.setItem('lusales_chapters', JSON.stringify(chapters));
-    closedModal('addChapterModal');
-    loadchapterList();
-    alert('Chapter "${title}" added successfully!');
+    closeModal('addChapterModal');                         // FIX: closedModal -> closeModal
+    loadChapterList();
+    alert(`Chapter "${title}" added successfully!`);       // FIX: backticks for interpolation
 
-    //clear form
     document.getElementById('chapterTitleInput').value = '';
     document.getElementById('chapterContent').value = '';
 }
 
 function editChapter(index) {
     const chapter = chapters[index];
-    const newTitle = prompt('Edit chapter title:', chapter,title);
+    const newTitle = prompt('Edit chapter title:', chapter.title);  // FIX: chapter,title -> chapter.title
     if (newTitle) {
         const newContent = prompt('Edit chapter content:', chapter.content);
 
-        chapter[index] = {
+        chapters[index] = {                                // FIX: chapter[index] -> chapters[index]
             ...chapter,
             title: newTitle,
             content: newContent
         };
 
         localStorage.setItem('lusales_chapters', JSON.stringify(chapters));
-        loadchapterList();
+        loadChapterList();
         alert('Chapter updated successfully!');
     }
 }
 
 function deleteChapter(index) {
-    if (confirm('Are you sure you want to delete "${chapters[index].title}"?')) {
+    if (confirm(`Are you sure you want to delete "${chapters[index].title}"?`)) {  // FIX: backticks
         chapters.splice(index, 1);
         localStorage.setItem('lusales_chapters', JSON.stringify(chapters));
-        loadchapterList();
-        alert('chapter deleted successfully');
+        loadChapterList();
+        alert('Chapter deleted successfully!');
     }
 }
 
@@ -466,8 +480,9 @@ function deleteChapter(index) {
 // UTILITY FUNCTIONS
 // ============================================
 
-function closedModal(modalId) {
-    document.getElementById(modalId).style.display = 'none';
+function closeModal(modalId) {                             // FIX: renamed from 'closedModal'
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'none';
 }
 
 function setupEventListeners() {
@@ -479,32 +494,39 @@ function setupEventListeners() {
     });
 
     // Book selection for chapters
-    document.getElementById('BookSelect').addEventListener('change', loadchapterList);
+    const bookSelect = document.getElementById('bookSelect');  // FIX: 'BookSelect' -> 'bookSelect'
+    if (bookSelect) {
+        bookSelect.addEventListener('change', loadChapterList);
+    }
 
     // Upload zone
-    const uploadzone = document.getElementById('uploadZone');
+    const uploadZone = document.getElementById('uploadZone');
     const fileUpload = document.getElementById('fileUpload');
 
-    if (uploadzone && fileUpload) {
-        uploadzone.addEventListener('click', () => {
+    if (uploadZone && fileUpload) {
+        uploadZone.addEventListener('click', () => {
             fileUpload.click();
         });
 
         fileUpload.addEventListener('change', handleFileUpload);
 
-        // Drag and drop
-        uploadzone.addEventListener('dragover', (e) => {
+        uploadZone.addEventListener('dragover', (e) => {
             e.preventDefault();
-            uploadzone.style.borderColor = '#3498db';
-            uploadzone.style.background = '#f0f8ff';
+            uploadZone.style.borderColor = '#3498db';
+            uploadZone.style.background = '#f0f8ff';
         });
 
-        uploadzone.addEventListener('dragleave', () => {
-            uploadzone.style.borderColor = '#ddd';
-            uploadzone.style.background = 'white';
+        uploadZone.addEventListener('dragleave', () => {   // FIX: removed misplaced file-drop logic from dragleave
+            uploadZone.style.borderColor = '#ddd';
+            uploadZone.style.background = 'white';
+        });
 
-            if (e.dataTransfer.file.lenght) {
-                handleFileUpload({ target: { file:e.dataTransfer.file} });
+        uploadZone.addEventListener('drop', (e) => {       // FIX: moved drop logic to the correct 'drop' event
+            e.preventDefault();
+            uploadZone.style.borderColor = '#ddd';
+            uploadZone.style.background = 'white';
+            if (e.dataTransfer.files.length) {             // FIX: .file -> .files, lenght -> length
+                handleFileUpload({ target: { files: e.dataTransfer.files } });  // FIX: file -> files
             }
         });
     }
@@ -514,36 +536,35 @@ function setupEventListeners() {
     modals.forEach(modal => {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
-                modal.style.display = 'none'
+                modal.style.display = 'none';
             }
         });
     });
 }
 
 function handleFileUpload(event) {
-    const file = event.target.file;
+    const files = event.target.files;                      // FIX: .file -> .files
     const uploadProgress = document.getElementById('uploadProgress');
 
-    if (!uploadProgress) return;
+    if (!uploadProgress || !files || files.length === 0) return;
 
     uploadProgress.style.display = 'block';
     uploadProgress.innerHTML = `
         <div class="uploading">
             <i class="fas fa-spinner fa-spin"></i>
-            <h3>Uploading ${file.lenght} file(s)...</h3>
+            <h3>Uploading ${files.length} file(s)...</h3>   <!-- FIX: file.lenght -> files.length -->
             <div class="progress-bar">
-                <div class="progess-fill"></div>
+                <div class="progress-fill"></div>           <!-- FIX: 'progess-fill' typo -->
             </div>
         </div>
     `;
 
-    // Simulate upload progress
     let progress = 0;
     const interval = setInterval(() => {
         progress += 20;
-        const progessFill = uploadProgress.querySelector('.progress-fill');
-        if (progessFill) {
-            progessFill.style.width = `${progress}%`;
+        const progressFill = uploadProgress.querySelector('.progress-fill');  // FIX: 'progessFill' -> 'progressFill'
+        if (progressFill) {
+            progressFill.style.width = `${progress}%`;
         }
 
         if (progress >= 100) {
@@ -553,7 +574,7 @@ function handleFileUpload(event) {
                     <div class="upload-complete">
                         <i class="fas fa-check-circle" style="color: #27ae60; font-size: 3rem;"></i>
                         <h3>Upload Complete!</h3>
-                        <p>${File.lenght} files(s) uploaded successfully.</p>
+                        <p>${files.length} file(s) uploaded successfully.</p>   <!-- FIX: File.lenght -> files.length -->
                         <p><small>Note: In a real implementation, files would be saved to a server.</small></p>
                     </div>
                 `;
