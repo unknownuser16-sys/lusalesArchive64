@@ -1,3 +1,7 @@
+/* ============================================
+   ADMIN PANEL STYLES - LUSALES ARCHIVE
+   ============================================ */
+
 .admin-container {
     min-height: 100vh;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -23,11 +27,19 @@
 }
 
 .login-form input {
-    width: 100px;
+    width: 100%;          /* FIX: '100px' -> '100%' (was cutting off the input field) */
     padding: 1rem;
     margin-bottom: 1rem;
     border: 2px solid #ddd;
-    border-radius: 1rem;
+    border-radius: 8px;   /* FIX: '1rem' -> '8px' (1rem border-radius on an input looks odd) */
+    font-size: 1rem;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.login-form input:focus {
+    border-color: #667eea;
 }
 
 .login-form button {
@@ -45,6 +57,10 @@
 .login-form button:hover {
     background: #5a67d8;
 }
+
+/* ============================================
+   ADMIN DASHBOARD
+   ============================================ */
 
 .admin-dashboard {
     width: 100%;
@@ -71,12 +87,21 @@
     padding: 0.5rem 1rem;
     border-radius: 5px;
     cursor: pointer;
+    transition: background 0.3s;
+}
+
+.admin-header button:hover {
+    background: #c0392b;
 }
 
 .admin-main {
     display: flex;
     min-height: 600px;
 }
+
+/* ============================================
+   SIDEBAR
+   ============================================ */
 
 .admin-sidebar {
     width: 250px;
@@ -89,25 +114,36 @@
     border: none;
     color: white;
     padding: 1rem 2rem;
+    width: 100%;
     text-align: left;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 0.5rem;
     transition: background 0.3s;
+    font-size: 0.95rem;
 }
 
 .sidebar-btn:hover {
     background: #2c3e50;
 }
 
-.sidebar-btn:active {
+.sidebar-btn.active {     /* FIX: was :active (pseudo-class) but we need .active (class) for JS toggling */
     background: #3498db;
 }
+
+/* ============================================
+   ADMIN CONTENT AREA
+   ============================================ */
 
 .admin-content {
     flex: 1;
     padding: 2rem;
+    overflow-y: auto;
+}
+
+.admin-section {
+    display: none;
 }
 
 .admin-section h2 {
@@ -126,7 +162,17 @@
     align-items: center;
     gap: 0.5rem;
     margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    transition: background 0.3s;
 }
+
+.add-btn:hover {
+    background: #219a52;
+}
+
+/* ============================================
+   BOOK & CHAPTER LIST ITEMS
+   ============================================ */
 
 .book-list, .chapter-list {
     display: grid;
@@ -143,17 +189,30 @@
     align-items: center;
 }
 
+.book-item h4, .chapter-item h4 {
+    margin: 0 0 0.25rem 0;
+    color: #2c3e50;
+}
+
+.book-meta, .chapter-preview {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    margin: 0.2rem 0;
+}
+
 .book-actions, .chapter-actions {
     display: flex;
     gap: 0.5rem;
+    flex-shrink: 0;
 }
 
 .edit-btn, .delete-btn {
-    padding: 0.5rem;
+    padding: 0.5rem 0.75rem;
     border: none;
     border-radius: 3px;
     cursor: pointer;
     color: white;
+    transition: opacity 0.2s;
 }
 
 .edit-btn {
@@ -164,11 +223,72 @@
     background: #e74c3c;
 }
 
-.upload-zone {
+.edit-btn:hover, .delete-btn:hover {
+    opacity: 0.85;
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #95a5a6;
+}
+
+.empty-state i {
     font-size: 3rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+/* ============================================
+   UPLOAD ZONE
+   ============================================ */
+
+.upload-zone {
+    border: 2px dashed #ddd;
+    border-radius: 10px;
+    padding: 3rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.3s, background 0.3s;
+    margin-bottom: 1.5rem;
+}
+
+.upload-zone:hover {
+    border-color: #3498db;
+    background: #f0f8ff;
+}
+
+.upload-zone i {
+    font-size: 3rem;      /* FIX: moved font-size here from old rule that had wrong selector */
     color: #3498db;
     margin-bottom: 1rem;
+    display: block;
 }
+
+.progress-bar {
+    width: 100%;
+    background: #eee;
+    border-radius: 5px;
+    height: 10px;
+    margin-top: 1rem;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #3498db;
+    width: 0%;
+    transition: width 0.2s;
+    border-radius: 5px;
+}
+
+/* ============================================
+   MODALS
+   ============================================ */
 
 .modal {
     display: none;
@@ -190,16 +310,40 @@
     width: 90%;
     max-width: 500px;
 }
+
+.modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: #2c3e50;
+}
+
 .modal-content input,
-.modal-content textarea {
+.modal-content textarea,
+.modal-content select {
     width: 100%;
     padding: 0.75rem;
     margin-bottom: 1rem;
     border: 2px solid #ddd;
     border-radius: 5px;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.3s;
+    font-family: inherit;
 }
 
-.modal-action {
+.modal-content input:focus,
+.modal-content textarea:focus,
+.modal-content select:focus {
+    border-color: #3498db;
+}
+
+.modal-content textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.modal-actions {                /* FIX: 'modal-action' -> 'modal-actions' for clarity */
     display: flex;
     gap: 1rem;
     justify-content: flex-end;
@@ -208,4 +352,29 @@
 .cancel-btn {
     background: #95a5a6;
     color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: background 0.3s;
+}
+
+.cancel-btn:hover {
+    background: #7f8c8d;
+}
+
+.save-btn {
+    background: #27ae60;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: background 0.3s;
+}
+
+.save-btn:hover {
+    background: #219a52;
 }
