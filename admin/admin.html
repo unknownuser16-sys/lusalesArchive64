@@ -7,11 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin:0; padding:0; box-sizing:border-box; }
 
         body {
             font-family: 'Roboto', sans-serif;
@@ -23,13 +19,8 @@
             padding: 20px;
         }
 
-        /* ── DASHBOARD WRAPPER ── */
-        .admin-container {
-            width: 100%;
-            max-width: 1200px;
-        }
+        .admin-container { width:100%; max-width:1200px; }
 
-        /* ── DASHBOARD ── */
         .admin-dashboard {
             display: none;
             background: white;
@@ -47,318 +38,134 @@
             align-items: center;
         }
 
-        .admin-header h1 {
-            font-size: 1.3rem;
-            font-family: 'Merriweather', serif;
-        }
+        .admin-header h1 { font-size:1.3rem; font-family:'Merriweather',serif; }
 
         .admin-header button {
-            background: #e74c3c;
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background 0.3s;
+            background: #e74c3c; color:white; border:none;
+            padding:0.5rem 1rem; border-radius:5px; cursor:pointer;
+            transition:background 0.3s;
         }
+        .admin-header button:hover { background:#c0392b; }
 
-        .admin-header button:hover {
-            background: #c0392b;
-        }
+        .admin-main { display:flex; min-height:600px; }
 
-        .admin-main {
-            display: flex;
-            min-height: 600px;
-        }
-
-        /* ── SIDEBAR ── */
-        .admin-sidebar {
-            width: 220px;
-            background: #34495e;
-            padding: 2rem 0;
-            flex-shrink: 0;
-        }
+        .admin-sidebar { width:220px; background:#34495e; padding:2rem 0; flex-shrink:0; }
 
         .sidebar-btn {
-            background: none;
-            border: none;
-            color: white;
-            padding: 1rem 2rem;
-            width: 100%;
-            text-align: left;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-size: 0.95rem;
-            transition: background 0.3s;
+            background:none; border:none; color:white;
+            padding:1rem 2rem; width:100%; text-align:left;
+            cursor:pointer; display:flex; align-items:center;
+            gap:0.75rem; font-size:0.95rem; transition:background 0.3s;
         }
+        .sidebar-btn:hover { background:#2c3e50; }
+        .sidebar-btn.active { background:#3498db; }
 
-        .sidebar-btn:hover {
-            background: #2c3e50;
-        }
+        .admin-content { flex:1; padding:2rem; overflow-y:auto; }
 
-        .sidebar-btn.active {
-            background: #3498db;
-        }
-
-        /* ── CONTENT AREA ── */
-        .admin-content {
-            flex: 1;
-            padding: 2rem;
-            overflow-y: auto;
-        }
-
-        .admin-section {
-            display: none;
-        }
-
-        .admin-section.active {
-            display: block;
-        }
+        .admin-section { display:none; }
+        .admin-section.active { display:block; }
 
         .admin-section h2 {
-            margin-bottom: 1.5rem;
-            color: #2c3e50;
-            font-family: 'Merriweather', serif;
+            margin-bottom:1.5rem; color:#2c3e50;
+            font-family:'Merriweather',serif;
         }
 
-        /* ── BUTTONS ── */
         .add-btn {
-            background: #27ae60;
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 5px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-            font-size: 0.95rem;
-            transition: background 0.3s;
+            background:#27ae60; color:white; border:none;
+            padding:0.75rem 1.5rem; border-radius:5px; cursor:pointer;
+            display:inline-flex; align-items:center; gap:0.5rem;
+            margin-bottom:1.5rem; font-size:0.95rem; transition:background 0.3s;
         }
-
-        .add-btn:hover { background: #219a52; }
+        .add-btn:hover { background:#219a52; }
 
         .edit-btn, .delete-btn {
-            padding: 0.4rem 0.75rem;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-            color: white;
-            font-size: 0.85rem;
-            transition: opacity 0.2s;
+            padding:0.4rem 0.75rem; border:none; border-radius:3px;
+            cursor:pointer; color:white; font-size:0.85rem; transition:opacity 0.2s;
         }
+        .edit-btn { background:#3498db; }
+        .delete-btn { background:#e74c3c; }
+        .edit-btn:hover, .delete-btn:hover { opacity:0.85; }
 
-        .edit-btn { background: #3498db; }
-        .delete-btn { background: #e74c3c; }
-        .edit-btn:hover, .delete-btn:hover { opacity: 0.85; }
-
-        /* ── BOOK & CHAPTER ITEMS ── */
-        .book-list, .chapter-list {
-            display: grid;
-            gap: 1rem;
-        }
+        .book-list, .chapter-list { display:grid; gap:1rem; }
 
         .book-item, .chapter-item {
-            background: #f8f9fa;
-            padding: 1rem 1.25rem;
-            border-radius: 5px;
-            border-left: 4px solid #3498db;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
+            background:#f8f9fa; padding:1rem 1.25rem;
+            border-radius:5px; border-left:4px solid #3498db;
+            display:flex; justify-content:space-between;
+            align-items:center; gap:1rem;
         }
 
-        .book-item h4, .chapter-item h4 {
-            margin: 0 0 0.25rem;
-            color: #2c3e50;
-        }
+        .book-item h4, .chapter-item h4 { margin:0 0 0.25rem; color:#2c3e50; }
+        .book-meta, .chapter-preview { margin:0; font-size:0.85rem; color:#7f8c8d; }
+        .book-item small, .chapter-item small { font-size:0.8rem; color:#95a5a6; }
+        .book-actions, .chapter-actions { display:flex; gap:0.5rem; flex-shrink:0; }
 
-        .book-item p, .chapter-item p {
-            margin: 0;
-            font-size: 0.85rem;
-            color: #7f8c8d;
-        }
+        .empty-state { text-align:center; padding:3rem; color:#95a5a6; }
+        .empty-state i { font-size:2.5rem; display:block; margin-bottom:1rem; }
 
-        .book-item small, .chapter-item small {
-            font-size: 0.8rem;
-            color: #95a5a6;
-        }
-
-        .book-actions, .chapter-actions {
-            display: flex;
-            gap: 0.5rem;
-            flex-shrink: 0;
-        }
-
-        /* ── EMPTY STATE ── */
-        .empty-state {
-            text-align: center;
-            padding: 3rem;
-            color: #95a5a6;
-        }
-
-        .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            display: block;
-        }
-
-        /* ── UPLOAD ZONE ── */
         .upload-zone {
-            border: 2px dashed #ddd;
-            border-radius: 10px;
-            padding: 3rem;
-            text-align: center;
-            cursor: pointer;
-            transition: border-color 0.3s, background 0.3s;
-            margin-bottom: 1.5rem;
+            border:2px dashed #ddd; border-radius:10px; padding:3rem;
+            text-align:center; cursor:pointer; transition:border-color 0.3s, background 0.3s;
+            margin-bottom:1.5rem;
+        }
+        .upload-zone:hover { border-color:#3498db; background:#f0f8ff; }
+        .upload-zone i { font-size:3rem; color:#3498db; display:block; margin-bottom:1rem; }
+        .upload-zone p { color:#7f8c8d; }
+
+        .chapter-filter {
+            display:flex; align-items:center; gap:1rem;
+            margin-bottom:1.5rem; flex-wrap:wrap;
+        }
+        .chapter-filter select {
+            padding:0.6rem 1rem; border:2px solid #ddd; border-radius:5px;
+            font-size:0.95rem; outline:none; flex:1; min-width:200px;
         }
 
-        .upload-zone:hover {
-            border-color: #3498db;
-            background: #f0f8ff;
-        }
-
-        .upload-zone i {
-            font-size: 3rem;
-            color: #3498db;
-            display: block;
-            margin-bottom: 1rem;
-        }
-
-        .upload-zone p { color: #7f8c8d; }
-
-        .progress-bar {
-            width: 100%;
-            background: #eee;
-            border-radius: 5px;
-            height: 10px;
-            margin-top: 1rem;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: #3498db;
-            width: 0%;
-            transition: width 0.2s;
-            border-radius: 5px;
-        }
-
-        /* ── MODALS ── */
         .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 3000;
-            align-items: center;
-            justify-content: center;
+            display:none; position:fixed; top:0; left:0;
+            width:100%; height:100%; background:rgba(0,0,0,0.5);
+            z-index:3000; align-items:center; justify-content:center;
         }
 
         .modal-content {
-            background: white;
-            padding: 2rem;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 520px;
+            background:white; padding:2rem; border-radius:10px;
+            width:90%; max-width:520px;
         }
 
-        .modal-content h3 {
-            margin-bottom: 1.5rem;
-            color: #2c3e50;
-            font-family: 'Merriweather', serif;
-        }
+        .modal-content h3 { margin-bottom:1.5rem; color:#2c3e50; font-family:'Merriweather',serif; }
 
         .modal-content input,
         .modal-content textarea,
         .modal-content select {
-            width: 100%;
-            padding: 0.75rem;
-            margin-bottom: 1rem;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            font-size: 0.95rem;
-            font-family: inherit;
-            outline: none;
-            transition: border-color 0.3s;
+            width:100%; padding:0.75rem; margin-bottom:1rem;
+            border:2px solid #ddd; border-radius:5px; font-size:0.95rem;
+            font-family:inherit; outline:none; transition:border-color 0.3s;
+            box-sizing:border-box;
         }
-
         .modal-content input:focus,
-        .modal-content textarea:focus,
-        .modal-content select:focus {
-            border-color: #3498db;
-        }
+        .modal-content textarea:focus { border-color:#3498db; }
+        .modal-content textarea { resize:vertical; min-height:180px; }
 
-        .modal-content textarea {
-            resize: vertical;
-            min-height: 140px;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-end;
-        }
+        .modal-actions { display:flex; gap:1rem; justify-content:flex-end; }
 
         .cancel-btn {
-            background: #95a5a6;
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.95rem;
-            transition: background 0.3s;
+            background:#95a5a6; color:white; border:none;
+            padding:0.75rem 1.5rem; border-radius:5px; cursor:pointer;
+            font-size:0.95rem; transition:background 0.3s;
         }
-
-        .cancel-btn:hover { background: #7f8c8d; }
+        .cancel-btn:hover { background:#7f8c8d; }
 
         .save-btn {
-            background: #27ae60;
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.95rem;
-            transition: background 0.3s;
+            background:#27ae60; color:white; border:none;
+            padding:0.75rem 1.5rem; border-radius:5px; cursor:pointer;
+            font-size:0.95rem; transition:background 0.3s;
         }
-
-        .save-btn:hover { background: #219a52; }
-
-        /* ── CHAPTER FILTER ROW ── */
-        .chapter-filter {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-        }
-
-        .chapter-filter select {
-            padding: 0.6rem 1rem;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            font-size: 0.95rem;
-            outline: none;
-            flex: 1;
-            min-width: 200px;
-        }
+        .save-btn:hover { background:#219a52; }
     </style>
 </head>
 <body>
 
 <div class="admin-container">
-
-    <!-- ═══════════════════════════════════════
-         DASHBOARD (shown after login)
-    ═══════════════════════════════════════ -->
     <div class="admin-dashboard" id="adminDashboard">
 
         <div class="admin-header">
@@ -368,7 +175,6 @@
 
         <div class="admin-main">
 
-            <!-- Sidebar -->
             <div class="admin-sidebar">
                 <button class="sidebar-btn active" data-section="books">
                     <i class="fas fa-book"></i> Books
@@ -381,10 +187,9 @@
                 </button>
             </div>
 
-            <!-- Content -->
             <div class="admin-content">
 
-                <!-- BOOKS SECTION -->
+                <!-- BOOKS -->
                 <div class="admin-section active" id="booksSection">
                     <h2><i class="fas fa-book"></i> Manage Books</h2>
                     <button class="add-btn" onclick="showAddBookForm()">
@@ -393,7 +198,7 @@
                     <div class="book-list" id="booksList"></div>
                 </div>
 
-                <!-- CHAPTERS SECTION -->
+                <!-- CHAPTERS -->
                 <div class="admin-section" id="chaptersSection">
                     <h2><i class="fas fa-file-alt"></i> Manage Chapters</h2>
                     <div class="chapter-filter">
@@ -407,28 +212,24 @@
                     <div class="chapter-list" id="adminChaptersList"></div>
                 </div>
 
-                <!-- UPLOAD SECTION -->
+                <!-- UPLOAD -->
                 <div class="admin-section" id="uploadSection">
                     <h2><i class="fas fa-upload"></i> Upload Files</h2>
                     <div class="upload-zone" id="uploadZone">
                         <i class="fas fa-cloud-upload-alt"></i>
                         <p>Click to upload or drag &amp; drop files here</p>
-                        <small style="color:#95a5a6">Supports images, text, and other files</small>
+                        <small style="color:#95a5a6">Note: file uploads are for reference only in this version</small>
                         <input type="file" id="fileUpload" multiple style="display:none">
                     </div>
                     <div id="uploadProgress" style="display:none"></div>
                 </div>
 
-            </div><!-- /admin-content -->
-        </div><!-- /admin-main -->
-    </div><!-- /admin-dashboard -->
+            </div>
+        </div>
+    </div>
+</div>
 
-</div><!-- /admin-container -->
-
-
-<!-- ═══════════════════════════════════════
-     ADD BOOK MODAL
-═══════════════════════════════════════ -->
+<!-- ADD BOOK MODAL -->
 <div class="modal" id="addBookModal">
     <div class="modal-content">
         <h3><i class="fas fa-book"></i> Add New Book</h3>
@@ -442,15 +243,13 @@
     </div>
 </div>
 
-<!-- ═══════════════════════════════════════
-     ADD CHAPTER MODAL
-═══════════════════════════════════════ -->
+<!-- ADD CHAPTER MODAL -->
 <div class="modal" id="addChapterModal">
     <div class="modal-content">
         <h3><i class="fas fa-file-alt"></i> Add New Chapter</h3>
         <input type="text" id="chapterTitleInput" placeholder="Chapter title *">
         <input type="date" id="chapterDate">
-        <textarea id="chapterContent" placeholder="Chapter content *" style="min-height:200px"></textarea>
+        <textarea id="chapterContent" placeholder="Paste your chapter content here *" style="min-height:220px"></textarea>
         <div class="modal-actions">
             <button class="cancel-btn" onclick="closeModal('addChapterModal')">Cancel</button>
             <button class="save-btn" onclick="addChapter()"><i class="fas fa-save"></i> Save Chapter</button>
@@ -458,8 +257,7 @@
     </div>
 </div>
 
-<!-- Load the admin logic -->
-<script src="admin.js"></script>
+<script type="module" src="admin.js"></script>
 
 </body>
 </html>
