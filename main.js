@@ -1,12 +1,7 @@
 // ============================================================
-// LUSALES ARCHIVE — MAIN SITE SCRIPT (Firebase Edition)
+// LUSALES ARCHIVE — MAIN SITE SCRIPT (Firebase Compat Edition)
 // ============================================================
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-import { getFirestore, collection, getDocs, orderBy, query, limit }
-    from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
-
-// ── Firebase config ──────────────────────────────────────
 const firebaseConfig = {
     apiKey: "AIzaSyBnsU904MyOFhK3zLJB02U39e9f2UnGWio",
     authDomain: "lusales-archive.firebaseapp.com",
@@ -16,17 +11,17 @@ const firebaseConfig = {
     appId: "1:56870938100:web:28aa9c471f24e3f9ee05a1"
 };
 
-const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-// ── State ────────────────────────────────────────────────
+// State
 let books    = [];
 let chapters = [];
 let currentBookChapters = [];
 let currentChapterIndex = 0;
 let readerFontSize = 1.15;
 
-// ── INIT ─────────────────────────────────────────────────
+// ── INIT ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
     await loadData();
     renderFeaturedBooks();
@@ -36,15 +31,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ============================================================
-// LOAD DATA FROM FIREBASE
+// LOAD DATA
 // ============================================================
 async function loadData() {
     try {
         const [booksSnap, chaptersSnap] = await Promise.all([
-            getDocs(collection(db, 'books')),
-            getDocs(query(collection(db, 'chapters'), orderBy('date', 'desc')))
+            db.collection('books').get(),
+            db.collection('chapters').orderBy('date', 'desc').get()
         ]);
-
         books    = booksSnap.docs.map(d => ({ id: d.id, ...d.data() }));
         chapters = chaptersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
     } catch (err) {
@@ -60,11 +54,7 @@ function renderFeaturedBooks() {
     if (!grid) return;
 
     if (books.length === 0) {
-        grid.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-book-open"></i>
-                <p>No books yet — check back soon.</p>
-            </div>`;
+        grid.innerHTML = `<div class="empty-state"><i class="fas fa-book-open"></i><p>No books yet — check back soon.</p></div>`;
         return;
     }
 
@@ -82,8 +72,7 @@ function renderFeaturedBooks() {
                 <h3>${escHtml(book.title)}</h3>
                 <p class="author">by ${escHtml(book.author)}</p>
                 <span class="chapter-count">${bookChapters.length} chapter${bookChapters.length !== 1 ? 's' : ''}</span>
-            </div>
-        `;
+            </div>`;
         grid.appendChild(card);
     });
 }
@@ -96,17 +85,12 @@ function renderRecentChapters() {
     if (!list) return;
 
     if (chapters.length === 0) {
-        list.innerHTML = `
-            <div class="empty-state" style="grid-column:unset">
-                <i class="fas fa-scroll"></i>
-                <p>No chapters yet — come back soon.</p>
-            </div>`;
+        list.innerHTML = `<div class="empty-state"><i class="fas fa-scroll"></i><p>No chapters yet — come back soon.</p></div>`;
         return;
     }
 
-    const recent = chapters.slice(0, 10);
     list.innerHTML = '';
-    recent.forEach(chapter => {
+    chapters.slice(0, 10).forEach(chapter => {
         const book = books.find(b => b.id === chapter.bookId);
         const entry = document.createElement('div');
         entry.className = 'chapter-entry';
@@ -116,8 +100,7 @@ function renderRecentChapters() {
                 <h4>${escHtml(chapter.title)}</h4>
                 <span class="book-name">${book ? escHtml(book.title) : 'Unknown Book'}</span>
             </div>
-            <div class="chapter-entry-meta">${formatDate(chapter.date)}</div>
-        `;
+            <div class="chapter-entry-meta">${formatDate(chapter.date)}</div>`;
         list.appendChild(entry);
     });
 }
@@ -129,12 +112,7 @@ function openBook(bookId) {
     const bookChaps = chapters
         .filter(c => c.bookId === bookId)
         .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    if (bookChaps.length === 0) {
-        alert('This book has no chapters yet.');
-        return;
-    }
-
+    if (bookChaps.length === 0) { alert('This book has no chapters yet.'); return; }
     currentBookChapters = bookChaps;
     currentChapterIndex = 0;
     showChapterInReader(currentBookChapters[0]);
@@ -143,11 +121,9 @@ function openBook(bookId) {
 function openChapter(chapterId) {
     const chapter = chapters.find(c => c.id === chapterId);
     if (!chapter) return;
-
     const bookChaps = chapters
         .filter(c => c.bookId === chapter.bookId)
         .sort((a, b) => new Date(a.date) - new Date(b.date));
-
     currentBookChapters = bookChaps;
     currentChapterIndex = bookChaps.findIndex(c => c.id === chapterId);
     showChapterInReader(chapter);
@@ -161,60 +137,34 @@ function showChapterInReader(chapter) {
     const next    = document.getElementById('nextChapter');
 
     title.textContent = chapter.title;
-
     const paragraphs = chapter.content
-        .split('\n')
-        .filter(p => p.trim())
-        .map(p => `<p>${escHtml(p)}</p>`)
-        .join('');
-
+        .split('\n').filter(p => p.trim())
+        .map(p => `<p>${escHtml(p)}</p>`).join('');
     content.innerHTML = paragraphs || `<p>${escHtml(chapter.content)}</p>`;
     content.style.fontSize = `${readerFontSize}rem`;
     content.scrollTop = 0;
-
     prev.disabled = currentChapterIndex === 0;
     next.disabled = currentChapterIndex === currentBookChapters.length - 1;
-
     modal.style.display = 'flex';
 }
 
 function setupReader() {
-    const modal    = document.getElementById('readerModal');
+    const modal   = document.getElementById('readerModal');
     const closeBtn = document.querySelector('.close-reader');
-    const prev     = document.getElementById('prevChapter');
-    const next     = document.getElementById('nextChapter');
-    const zoomIn   = document.querySelector('[data-action="zoom-in"]');
-    const zoomOut  = document.querySelector('[data-action="zoom-out"]');
-    const content  = document.getElementById('readerContent');
+    const prev    = document.getElementById('prevChapter');
+    const next    = document.getElementById('nextChapter');
+    const zoomIn  = document.querySelector('[data-action="zoom-in"]');
+    const zoomOut = document.querySelector('[data-action="zoom-out"]');
+    const content = document.getElementById('readerContent');
 
     if (closeBtn) closeBtn.onclick = () => modal.style.display = 'none';
-    if (modal) modal.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+    if (modal) modal.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
+    if (prev) prev.onclick = () => { if (currentChapterIndex > 0) { currentChapterIndex--; showChapterInReader(currentBookChapters[currentChapterIndex]); } };
+    if (next) next.onclick = () => { if (currentChapterIndex < currentBookChapters.length - 1) { currentChapterIndex++; showChapterInReader(currentBookChapters[currentChapterIndex]); } };
+    if (zoomIn)  zoomIn.onclick  = () => { readerFontSize = Math.min(readerFontSize + 0.1, 1.8); if (content) content.style.fontSize = `${readerFontSize}rem`; };
+    if (zoomOut) zoomOut.onclick = () => { readerFontSize = Math.max(readerFontSize - 0.1, 0.8); if (content) content.style.fontSize = `${readerFontSize}rem`; };
 
-    if (prev) prev.onclick = () => {
-        if (currentChapterIndex > 0) {
-            currentChapterIndex--;
-            showChapterInReader(currentBookChapters[currentChapterIndex]);
-        }
-    };
-
-    if (next) next.onclick = () => {
-        if (currentChapterIndex < currentBookChapters.length - 1) {
-            currentChapterIndex++;
-            showChapterInReader(currentBookChapters[currentChapterIndex]);
-        }
-    };
-
-    if (zoomIn) zoomIn.onclick = () => {
-        readerFontSize = Math.min(readerFontSize + 0.1, 1.8);
-        if (content) content.style.fontSize = `${readerFontSize}rem`;
-    };
-
-    if (zoomOut) zoomOut.onclick = () => {
-        readerFontSize = Math.max(readerFontSize - 0.1, 0.8);
-        if (content) content.style.fontSize = `${readerFontSize}rem`;
-    };
-
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', e => {
         if (!modal || modal.style.display !== 'flex') return;
         if (e.key === 'Escape') modal.style.display = 'none';
         if (e.key === 'ArrowRight' && next && !next.disabled) next.click();
@@ -230,27 +180,19 @@ function setupSearch() {
     const button = document.querySelector('.search-box button');
 
     function doSearch() {
-        const query = input.value.trim().toLowerCase();
-        if (!query) { renderFeaturedBooks(); return; }
-
+        const q = input.value.trim().toLowerCase();
+        if (!q) { renderFeaturedBooks(); return; }
         const results = books.filter(b =>
-            b.title.toLowerCase().includes(query) ||
-            b.author.toLowerCase().includes(query) ||
-            (b.description && b.description.toLowerCase().includes(query))
+            b.title.toLowerCase().includes(q) ||
+            b.author.toLowerCase().includes(q) ||
+            (b.description && b.description.toLowerCase().includes(q))
         );
-
         const grid = document.getElementById('featuredBooks');
         if (!grid) return;
-
         if (results.length === 0) {
-            grid.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-search"></i>
-                    <p>No books found for "<strong>${escHtml(query)}</strong>"</p>
-                </div>`;
+            grid.innerHTML = `<div class="empty-state"><i class="fas fa-search"></i><p>No books found for "<strong>${escHtml(q)}</strong>"</p></div>`;
             return;
         }
-
         grid.innerHTML = '';
         results.forEach(book => {
             const bookChapters = chapters.filter(c => c.bookId === book.id);
@@ -265,12 +207,10 @@ function setupSearch() {
                     <h3>${escHtml(book.title)}</h3>
                     <p class="author">by ${escHtml(book.author)}</p>
                     <span class="chapter-count">${bookChapters.length} chapter${bookChapters.length !== 1 ? 's' : ''}</span>
-                </div>
-            `;
+                </div>`;
             grid.appendChild(card);
         });
-
-        document.getElementById('featuredBooks').scrollIntoView({ behavior: 'smooth' });
+        grid.scrollIntoView({ behavior: 'smooth' });
     }
 
     if (button) button.onclick = doSearch;
