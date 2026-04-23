@@ -1,22 +1,56 @@
 // ============================================================
-// LUSALES ARCHIVE — MAIN SITE SCRIPT
+// LUSALES ARCHIVE — MAIN SITE SCRIPT (Firebase Edition)
 // ============================================================
 
-// Load data saved by the admin panel
-let books    = JSON.parse(localStorage.getItem('lusales_books'))    || [];
-let chapters = JSON.parse(localStorage.getItem('lusales_chapters')) || [];
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import { getFirestore, collection, getDocs, orderBy, query, limit }
+    from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-let currentChapterIndex = 0;
+// ── Firebase config ──────────────────────────────────────
+const firebaseConfig = {
+    apiKey: "AIzaSyBnsU904MyOFhK3zLJB02U39e9f2UnGWio",
+    authDomain: "lusales-archive.firebaseapp.com",
+    projectId: "lusales-archive",
+    storageBucket: "lusales-archive.firebasestorage.app",
+    messagingSenderId: "56870938100",
+    appId: "1:56870938100:web:28aa9c471f24e3f9ee05a1"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ── State ────────────────────────────────────────────────
+let books    = [];
+let chapters = [];
 let currentBookChapters = [];
+let currentChapterIndex = 0;
 let readerFontSize = 1.15;
 
-// ── INIT ──────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+// ── INIT ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadData();
     renderFeaturedBooks();
     renderRecentChapters();
     setupReader();
     setupSearch();
 });
+
+// ============================================================
+// LOAD DATA FROM FIREBASE
+// ============================================================
+async function loadData() {
+    try {
+        const [booksSnap, chaptersSnap] = await Promise.all([
+            getDocs(collection(db, 'books')),
+            getDocs(query(collection(db, 'chapters'), orderBy('date', 'desc')))
+        ]);
+
+        books    = booksSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        chapters = chaptersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (err) {
+        console.error('Failed to load data:', err);
+    }
+}
 
 // ============================================================
 // FEATURED BOOKS
@@ -41,8 +75,8 @@ function renderFeaturedBooks() {
         card.className = 'book-card';
         card.onclick = () => openBook(book.id);
         card.innerHTML = `
-            <div class="book-cover" style="background: ${book.coverColor || defaultCover()}">
-                <i class="fas fa-book" style="position:relative;z-index:1;color:rgba(255,255,255,0.3)"></i>
+            <div class="book-cover" style="background:${book.coverColor || randomCover()}">
+                <i class="fas fa-book" style="position:relative;z-index:1;color:rgba(255,255,255,0.25)"></i>
             </div>
             <div class="book-info">
                 <h3>${escHtml(book.title)}</h3>
@@ -52,17 +86,6 @@ function renderFeaturedBooks() {
         `;
         grid.appendChild(card);
     });
-}
-
-function defaultCover() {
-    const gradients = [
-        'linear-gradient(135deg, #1a1a2e, #16213e)',
-        'linear-gradient(135deg, #0f3460, #533483)',
-        'linear-gradient(135deg, #2d1b69, #11998e)',
-        'linear-gradient(135deg, #373b44, #4286f4)',
-        'linear-gradient(135deg, #3d0c02, #8a1a0a)',
-    ];
-    return gradients[Math.floor(Math.random() * gradients.length)];
 }
 
 // ============================================================
@@ -81,11 +104,7 @@ function renderRecentChapters() {
         return;
     }
 
-    // Sort newest first, show last 10
-    const recent = [...chapters]
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .slice(0, 10);
-
+    const recent = chapters.slice(0, 10);
     list.innerHTML = '';
     recent.forEach(chapter => {
         const book = books.find(b => b.id === chapter.bookId);
@@ -143,7 +162,6 @@ function showChapterInReader(chapter) {
 
     title.textContent = chapter.title;
 
-    // Wrap paragraphs for nice reading layout
     const paragraphs = chapter.content
         .split('\n')
         .filter(p => p.trim())
@@ -157,7 +175,6 @@ function showChapterInReader(chapter) {
     prev.disabled = currentChapterIndex === 0;
     next.disabled = currentChapterIndex === currentBookChapters.length - 1;
 
-    modal.classList.add('open');
     modal.style.display = 'flex';
 }
 
@@ -170,64 +187,38 @@ function setupReader() {
     const zoomOut  = document.querySelector('[data-action="zoom-out"]');
     const content  = document.getElementById('readerContent');
 
-    if (closeBtn) {
-        closeBtn.onclick = () => {
-            modal.style.display = 'none';
-            modal.classList.remove('open');
-        };
-    }
+    if (closeBtn) closeBtn.onclick = () => modal.style.display = 'none';
+    if (modal) modal.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
 
-    // Close on backdrop click
-    if (modal) {
-        modal.onclick = (e) => {
-            if (e.target === modal) {
-                modal.style.display = 'none';
-                modal.classList.remove('open');
-            }
-        };
-    }
+    if (prev) prev.onclick = () => {
+        if (currentChapterIndex > 0) {
+            currentChapterIndex--;
+            showChapterInReader(currentBookChapters[currentChapterIndex]);
+        }
+    };
 
-    if (prev) {
-        prev.onclick = () => {
-            if (currentChapterIndex > 0) {
-                currentChapterIndex--;
-                showChapterInReader(currentBookChapters[currentChapterIndex]);
-            }
-        };
-    }
+    if (next) next.onclick = () => {
+        if (currentChapterIndex < currentBookChapters.length - 1) {
+            currentChapterIndex++;
+            showChapterInReader(currentBookChapters[currentChapterIndex]);
+        }
+    };
 
-    if (next) {
-        next.onclick = () => {
-            if (currentChapterIndex < currentBookChapters.length - 1) {
-                currentChapterIndex++;
-                showChapterInReader(currentBookChapters[currentChapterIndex]);
-            }
-        };
-    }
+    if (zoomIn) zoomIn.onclick = () => {
+        readerFontSize = Math.min(readerFontSize + 0.1, 1.8);
+        if (content) content.style.fontSize = `${readerFontSize}rem`;
+    };
 
-    if (zoomIn) {
-        zoomIn.onclick = () => {
-            readerFontSize = Math.min(readerFontSize + 0.1, 1.8);
-            if (content) content.style.fontSize = `${readerFontSize}rem`;
-        };
-    }
+    if (zoomOut) zoomOut.onclick = () => {
+        readerFontSize = Math.max(readerFontSize - 0.1, 0.8);
+        if (content) content.style.fontSize = `${readerFontSize}rem`;
+    };
 
-    if (zoomOut) {
-        zoomOut.onclick = () => {
-            readerFontSize = Math.max(readerFontSize - 0.1, 0.8);
-            if (content) content.style.fontSize = `${readerFontSize}rem`;
-        };
-    }
-
-    // Keyboard navigation
     document.addEventListener('keydown', (e) => {
         if (!modal || modal.style.display !== 'flex') return;
-        if (e.key === 'Escape') {
-            modal.style.display = 'none';
-            modal.classList.remove('open');
-        }
+        if (e.key === 'Escape') modal.style.display = 'none';
         if (e.key === 'ArrowRight' && next && !next.disabled) next.click();
-        if (e.key === 'ArrowLeft' && prev && !prev.disabled) prev.click();
+        if (e.key === 'ArrowLeft'  && prev && !prev.disabled) prev.click();
     });
 }
 
@@ -240,10 +231,7 @@ function setupSearch() {
 
     function doSearch() {
         const query = input.value.trim().toLowerCase();
-        if (!query) {
-            renderFeaturedBooks();
-            return;
-        }
+        if (!query) { renderFeaturedBooks(); return; }
 
         const results = books.filter(b =>
             b.title.toLowerCase().includes(query) ||
@@ -270,8 +258,8 @@ function setupSearch() {
             card.className = 'book-card';
             card.onclick = () => openBook(book.id);
             card.innerHTML = `
-                <div class="book-cover" style="background: ${book.coverColor || defaultCover()}">
-                    <i class="fas fa-book" style="position:relative;z-index:1;color:rgba(255,255,255,0.3)"></i>
+                <div class="book-cover" style="background:${book.coverColor || randomCover()}">
+                    <i class="fas fa-book" style="position:relative;z-index:1;color:rgba(255,255,255,0.25)"></i>
                 </div>
                 <div class="book-info">
                     <h3>${escHtml(book.title)}</h3>
@@ -282,28 +270,33 @@ function setupSearch() {
             grid.appendChild(card);
         });
 
-        // Scroll to results
-        document.getElementById('featuredBooks').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('featuredBooks').scrollIntoView({ behavior: 'smooth' });
     }
 
     if (button) button.onclick = doSearch;
-    if (input) input.addEventListener('keydown', (e) => { if (e.key === 'Enter') doSearch(); });
+    if (input)  input.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
 }
 
 // ============================================================
 // UTILITIES
 // ============================================================
+function randomCover() {
+    const g = [
+        'linear-gradient(135deg,#1a1a2e,#16213e)',
+        'linear-gradient(135deg,#0f3460,#533483)',
+        'linear-gradient(135deg,#2d1b69,#11998e)',
+        'linear-gradient(135deg,#373b44,#4286f4)',
+        'linear-gradient(135deg,#3d0c02,#8a1a0a)',
+    ];
+    return g[Math.floor(Math.random() * g.length)];
+}
+
 function escHtml(str) {
     if (!str) return '';
-    return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function formatDate(dateStr) {
     if (!dateStr) return '';
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    return new Date(dateStr).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
 }
