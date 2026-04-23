@@ -1,52 +1,64 @@
-// ADMIN PANEL - LUSALES ARCHIVE
-const SECRET_ADMIN_KEY = "deep-speed-2005";
+// ============================================================
+// LUSALES ARCHIVE — ADMIN SCRIPT (Firebase Edition)
+// ============================================================
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, orderBy, query }
+    from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+// ── Firebase config ──────────────────────────────────────
+const firebaseConfig = {
+    apiKey: "AIzaSyBnsU904MyOFhK3zLJB02U39e9f2UnGWio",
+    authDomain: "lusales-archive.firebaseapp.com",
+    projectId: "lusales-archive",
+    storageBucket: "lusales-archive.firebasestorage.app",
+    messagingSenderId: "56870938100",
+    appId: "1:56870938100:web:28aa9c471f24e3f9ee05a1"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ── Access control ───────────────────────────────────────
+const SECRET_ADMIN_KEY   = "deep-speed-2005";
 const ADMIN_ACCESS_COOKIE = "admin_access_granted";
 
-// DOM Elements
+// ── State ────────────────────────────────────────────────
+let books    = [];
+let chapters = [];
+
 const adminSections = document.querySelectorAll('.admin-section');
-const sidebarBtns = document.querySelectorAll('.sidebar-btn');
+const sidebarBtns   = document.querySelectorAll('.sidebar-btn');
 
-// Data storage (in production, use a database)
-let books = JSON.parse(localStorage.getItem('lusales_books')) || [];
-let chapters = JSON.parse(localStorage.getItem('lusales_chapters')) || [];  // FIX: added quotes around key
-
-// =============================================
-// INITIALIZATION
-// =============================================
-
+// ── INIT ─────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     checkAdminAccess();
     setupEventListeners();
 });
 
-// =============================================
-// SECURITY & ACCESS CONTROL
-// =============================================
-
+// ============================================================
+// ACCESS CONTROL
+// ============================================================
 function checkAdminAccess() {
-    const urlParams = new URLSearchParams(window.location.search);  // FIX: ur1Params -> urlParams
-    const key = urlParams.get('key');
-
+    const urlParams  = new URLSearchParams(window.location.search);
+    const key        = urlParams.get('key');
     const storedAccess = localStorage.getItem(ADMIN_ACCESS_COOKIE);
-    const loginTime = localStorage.getItem('admin_login_time');
-    const isLoginValid = loginTime &&
-        (Date.now() - parseInt(loginTime)) < (24 * 60 * 60 * 1000);
+    const loginTime    = localStorage.getItem('admin_login_time');
+    const isLoginValid = loginTime && (Date.now() - parseInt(loginTime)) < (24 * 60 * 60 * 1000);
 
     if (key === SECRET_ADMIN_KEY || (storedAccess === 'true' && isLoginValid)) {
         localStorage.setItem(ADMIN_ACCESS_COOKIE, 'true');
         localStorage.setItem('admin_login_time', Date.now().toString());
         showDashboard();
-        loadBooksForAdmin();  // FIX: localBooksForAdmin -> loadBooksForAdmin
+        loadBooksForAdmin();
     } else {
         showAccessDenied();
     }
 }
 
 function showDashboard() {
-    const loginForm = document.getElementById('loginForm');
-    const adminDashboard = document.getElementById('adminDashboard');
-    if (loginForm) loginForm.style.display = 'none';
-    if (adminDashboard) adminDashboard.style.display = 'block';
+    const dashboard = document.getElementById('adminDashboard');
+    if (dashboard) dashboard.style.display = 'block';
 }
 
 function showAccessDenied() {
@@ -66,102 +78,28 @@ function showAccessDenied() {
                 </p>
                 <p class="hint">Contact the site administrator if you need access.</p>
             </div>
-
             <style>
-                body {
-                    margin: 0;
-                    padding: 0;                              /* FIX: 'o' -> '0' */
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    min-height: 100vh;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-family: 'Roboto', sans-serif;
-                }
-                .access-denied {
-                    width: 100%;
-                    max-width: 500px;
-                    padding: 20px;
-                }
-                .access-form {
-                    background: white;
-                    padding: 2.5rem;
-                    border-radius: 15px;
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.3);  /* FIX: 0,3 -> 0.3 */
-                    text-align: center;
-                }
-                .access-form h2 {
-                    color: #2c3e50;
-                    margin-bottom: 1rem;                     /* FIX: margin-buttom typo */
-                    font-family: 'Merriweather', serif;
-                }
-                .access-form > p {
-                    color: #7f8c8d;
-                    margin-bottom: 2rem;
-                    line-height: 1.6;
-                }
-                .input-group {
-                    display: flex;
-                    gap: 10px;
-                    margin-bottom: 1.5rem;                   /* FIX: missing colon */
-                }
-                .input-group input {                         /* FIX: 'inout' typo */
-                    flex: 1;
-                    padding: 1rem;
-                    border: 2px solid #ddd;
-                    border-radius: 8px;
-                    font-size: 1rem;
-                    transition: border-color 0.3s;           /* FIX: missing colon */
-                    outline: none;
-                }
-                .input-group input:focus {
-                    border-color: #3498db;                   /* FIX: was applying button styles to input focus */
-                }
-                .input-group button {                        /* FIX: 'input-ground buttom' typos */
-                    background: #3498db;
-                    color: white;
-                    border: none;
-                    padding: 0 2rem;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    font-size: 1rem;
-                    display: flex;
-                    align-items: center;                     /* FIX: align-item -> align-items */
-                    gap: 8px;
-                    transition: background 0.3s;
-                }
-                .input-group button:hover {
-                    background: #2980b9;
-                }
-                .error-msg {
-                    color: #e74c3c;
-                    display: none;                           /* FIX: 'dispaly' typo */
-                    align-items: center;
-                    justify-content: center;
-                    gap: 8px;
-                    font-size: 0.9rem;
-                }
-                .hint {
-                    font-size: 0.85rem;
-                    color: #95a5a6;
-                    margin-top: 1.5rem;
-                    border-top: 1px solid #eee;
-                    padding-top: 1rem;
-                }
-                @keyframes shake {                           /* FIX: @Keyframes -> @keyframes */
-                    0%, 100% { transform: translateX(0); }
-                    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-                    20%, 40%, 60%, 80% { transform: translateX(5px); }
-                }                                            /* FIX: added missing closing brace */
+                body { margin:0; padding:0; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); min-height:100vh; display:flex; align-items:center; justify-content:center; font-family:'Roboto',sans-serif; }
+                .access-denied { width:100%; max-width:500px; padding:20px; }
+                .access-form { background:white; padding:2.5rem; border-radius:15px; box-shadow:0 20px 40px rgba(0,0,0,0.3); text-align:center; }
+                .access-form h2 { color:#2c3e50; margin-bottom:1rem; }
+                .access-form > p { color:#7f8c8d; margin-bottom:2rem; line-height:1.6; }
+                .input-group { display:flex; gap:10px; margin-bottom:1.5rem; }
+                .input-group input { flex:1; padding:1rem; border:2px solid #ddd; border-radius:8px; font-size:1rem; outline:none; }
+                .input-group input:focus { border-color:#3498db; }
+                .input-group button { background:#3498db; color:white; border:none; padding:0 2rem; border-radius:8px; cursor:pointer; font-size:1rem; transition:background 0.3s; }
+                .input-group button:hover { background:#2980b9; }
+                .error-msg { color:#e74c3c; display:none; align-items:center; justify-content:center; gap:8px; font-size:0.9rem; }
+                .hint { font-size:0.85rem; color:#95a5a6; margin-top:1.5rem; border-top:1px solid #eee; padding-top:1rem; }
+                @keyframes shake { 0%,100%{transform:translateX(0)} 10%,30%,50%,70%,90%{transform:translateX(-5px)} 20%,40%,60%,80%{transform:translateX(5px)} }
             </style>
         </div>
     `;
 }
 
-function verifyAccess() {
-    const code = document.getElementById('accessCode').value;
+window.verifyAccess = function() {
+    const code     = document.getElementById('accessCode').value;
     const errorMsg = document.getElementById('errorMsg');
-
     if (code === SECRET_ADMIN_KEY) {
         localStorage.setItem(ADMIN_ACCESS_COOKIE, 'true');
         localStorage.setItem('admin_login_time', Date.now().toString());
@@ -169,416 +107,335 @@ function verifyAccess() {
     } else {
         errorMsg.style.display = 'flex';
         document.getElementById('accessCode').style.animation = 'shake 0.5s';
-        setTimeout(() => {
-            document.getElementById('accessCode').style.animation = '';
-        }, 500);
-
-        if (!document.querySelector('#shake-animation')) {
-            const style = document.createElement('style');
-            style.id = 'shake-animation';
-            style.textContent = `
-                @keyframes shake {
-                    0%, 100% { transform: translateX(0); }
-                    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-                    20%, 40%, 60%, 80% { transform: translateX(5px); }
-                }
-            `;
-            document.head.appendChild(style);
-        }
+        setTimeout(() => document.getElementById('accessCode').style.animation = '', 500);
     }
 }
 
-// ========================================
-// ADMIN DASHBOARD FUNCTIONS
-// ========================================
-
-function logout() {
+window.logout = function() {
     localStorage.removeItem(ADMIN_ACCESS_COOKIE);
-    localStorage.removeItem('admin_login_time');  // FIX: 'admin_login_item' -> 'admin_login_time'
+    localStorage.removeItem('admin_login_time');
     location.href = '../index.html';
 }
 
-function showSection(sectionId) {
-    // Hide all sections
-    adminSections.forEach(section => {
-        section.style.display = 'none';
-    });
-
-    // Show selected section
+// ============================================================
+// SIDEBAR NAVIGATION
+// ============================================================
+window.showSection = function(sectionId) {
+    adminSections.forEach(s => s.style.display = 'none');
     const target = document.getElementById(`${sectionId}Section`);
     if (target) target.style.display = 'block';
 
-    // Update active button  FIX: was removing 'active' instead of adding it
     sidebarBtns.forEach(btn => {
         btn.classList.remove('active');
-        if (btn.dataset.section === sectionId) {
-            btn.classList.add('active');
-        }
+        if (btn.dataset.section === sectionId) btn.classList.add('active');
     });
 
-    // Load appropriate data
-    if (sectionId === 'books') {
-        loadBooksForAdmin();
-    } else if (sectionId === 'chapters') {
-        loadChaptersForAdmin();
-    }
+    if (sectionId === 'books')    loadBooksForAdmin();
+    if (sectionId === 'chapters') loadChaptersForAdmin();
 }
 
-// ============================================
-// BOOK MANAGEMENT
-// ============================================
-
-function loadBooksForAdmin() {                             // FIX: renamed from 'localBooksForAdmin'
+// ============================================================
+// BOOKS — FIREBASE
+// ============================================================
+async function loadBooksForAdmin() {
     const booksList = document.getElementById('booksList');
     if (!booksList) return;
-    booksList.innerHTML = '';
+    booksList.innerHTML = '<p style="color:#7f8c8d;padding:1rem">Loading...</p>';
 
-    if (books.length === 0) {                              // FIX: 'lenght' -> 'length'
+    try {
+        const snap = await getDocs(collection(db, 'books'));
+        books = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (err) {
+        booksList.innerHTML = `<p style="color:#e74c3c">Failed to load books: ${err.message}</p>`;
+        return;
+    }
+
+    if (books.length === 0) {
         booksList.innerHTML = `
             <div class="empty-state">
                 <i class="fas fa-book"></i>
                 <p>No books yet. Add your first book!</p>
-            </div>
-        `;
+            </div>`;
         return;
     }
 
-    books.forEach((book, index) => {                       // FIX: (books, index) -> (book, index)
-        const bookItem = document.createElement('div');   // FIX: 'BookItem' -> 'bookItem'
-        bookItem.className = 'book-item';
-        bookItem.innerHTML = `
+    booksList.innerHTML = '';
+    books.forEach((book, index) => {
+        const item = document.createElement('div');
+        item.className = 'book-item';
+        item.innerHTML = `
             <div>
-                <h4>${book.title}</h4>                    <!-- FIX: $(book.title) -> \${book.title}, fixed closing tag -->
-                <p class="book-meta">by ${book.author}</p>  <!-- FIX: $ -> \${ } -->
-                <p class="book-desc">${book.description || 'No description'}</p>  <!-- FIX: missing closing quote -->
-                <small>Created: ${new Date(book.createdAt).toLocaleDateString()}</small>  <!-- FIX: toLocalDateString -> toLocaleDateString -->
+                <h4>${escHtml(book.title)}</h4>
+                <p class="book-meta">by ${escHtml(book.author)}</p>
+                <p class="book-desc">${escHtml(book.description || 'No description')}</p>
+                <small>Added: ${formatDate(book.createdAt)}</small>
             </div>
             <div class="book-actions">
-                <button class="edit-btn" onclick="editBook(${index})" title="Edit">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="delete-btn" onclick="deleteBook(${index})" title="Delete">
-                    <i class="fas fa-trash"></i>
-                </button>
+                <button class="edit-btn" onclick="editBook('${book.id}')" title="Edit"><i class="fas fa-edit"></i></button>
+                <button class="delete-btn" onclick="deleteBook('${book.id}','${escHtml(book.title)}')" title="Delete"><i class="fas fa-trash"></i></button>
             </div>
         `;
-        booksList.appendChild(bookItem);
+        booksList.appendChild(item);
     });
 }
 
-function showAddBookForm() {
+window.showAddBookForm = function() {
     document.getElementById('addBookModal').style.display = 'flex';
 }
 
-function addBook() {
-    const title = document.getElementById('bookTitle').value.trim();
-    const author = document.getElementById('bookAuthor').value.trim();
+window.addBook = async function() {
+    const title       = document.getElementById('bookTitle').value.trim();
+    const author      = document.getElementById('bookAuthor').value.trim();
     const description = document.getElementById('bookDescription').value.trim();
 
-    if (!title || !author) {
-        alert('Please fill in the title and author fields');
-        return;
-    }
+    if (!title || !author) { alert('Please fill in the title and author fields'); return; }
+
+    const colors = [
+        'linear-gradient(135deg,#1a1a2e,#16213e)',
+        'linear-gradient(135deg,#0f3460,#533483)',
+        'linear-gradient(135deg,#2d1b69,#11998e)',
+        'linear-gradient(135deg,#373b44,#4286f4)',
+        'linear-gradient(135deg,#3d0c02,#8a1a0a)',
+    ];
 
     const newBook = {
-        id: Date.now(),                                    // FIX: date.now() -> Date.now()
         title,
         author,
         description,
-        coverColor: `linear-gradient(45deg, #${Math.floor(Math.random()*16777215).toString(16)}, #${Math.floor(Math.random()*16777215).toString(16)})`,  // FIX: missing .toString(16) and closing paren
+        coverColor: colors[Math.floor(Math.random() * colors.length)],
         createdAt: new Date().toISOString()
     };
 
-    books.push(newBook);
-    localStorage.setItem('lusales_books', JSON.stringify(books));
-    closeModal('addBookModal');                            // FIX: closedModal -> closeModal
-    loadBooksForAdmin();
-    alert(`Book "${title}" added successfully!`);          // FIX: single quotes -> backticks for interpolation
-
-    document.getElementById('bookTitle').value = '';
-    document.getElementById('bookAuthor').value = '';
-    document.getElementById('bookDescription').value = '';
+    try {
+        await addDoc(collection(db, 'books'), newBook);
+        closeModal('addBookModal');
+        document.getElementById('bookTitle').value = '';
+        document.getElementById('bookAuthor').value = '';
+        document.getElementById('bookDescription').value = '';
+        alert(`Book "${title}" added successfully!`);
+        loadBooksForAdmin();
+    } catch (err) {
+        alert('Error adding book: ' + err.message);
+    }
 }
 
-function editBook(index) {                                 // FIX: aditBook -> editBook
-    const book = books[index];
-    const newTitle = prompt('Edit book title:', book.title);
-    if (newTitle) {
-        const newAuthor = prompt('Edit author:', book.author);
-        const newDesc = prompt('Edit description:', book.description);
+window.editBook = async function(bookId) {
+    const book = books.find(b => b.id === bookId);
+    if (!book) return;
+    const newTitle  = prompt('Edit book title:', book.title);
+    if (!newTitle) return;
+    const newAuthor = prompt('Edit author:', book.author);
+    const newDesc   = prompt('Edit description:', book.description);
 
-        books[index] = {
-            ...book,
+    try {
+        await updateDoc(doc(db, 'books', bookId), {
             title: newTitle,
-            author: newAuthor,
-            description: newDesc
-        };
-
-        localStorage.setItem('lusales_books', JSON.stringify(books));
-        loadBooksForAdmin();
+            author: newAuthor || book.author,
+            description: newDesc || ''
+        });
         alert('Book updated successfully!');
-    }
-}
-
-function deleteBook(index) {
-    if (confirm(`Are you sure you want to delete "${books[index].title}"? This will also delete all its chapters!`)) {  // FIX: backticks for interpolation
-        const bookId = books[index].id;                    // FIX: 'BookId' -> 'bookId' (consistent casing)
-
-        books.splice(index, 1);
-
-        // Delete associated chapters  FIX: chapter.BookId -> chapter.bookId
-        chapters = chapters.filter(chapter => chapter.bookId !== bookId);
-
-        localStorage.setItem('lusales_books', JSON.stringify(books));
-        localStorage.setItem('lusales_chapters', JSON.stringify(chapters));
-
         loadBooksForAdmin();
-        alert('Book deleted successfully!');
+    } catch (err) {
+        alert('Error updating book: ' + err.message);
     }
 }
 
-// ============================================
-// CHAPTER MANAGEMENT
-// ============================================
+window.deleteBook = async function(bookId, bookTitle) {
+    if (!confirm(`Are you sure you want to delete "${bookTitle}"? This will also delete all its chapters!`)) return;
 
-function loadChaptersForAdmin() {
+    try {
+        // Delete book
+        await deleteDoc(doc(db, 'books', bookId));
+
+        // Delete associated chapters
+        const chapSnap = await getDocs(collection(db, 'chapters'));
+        const deletes  = chapSnap.docs
+            .filter(d => d.data().bookId === bookId)
+            .map(d => deleteDoc(doc(db, 'chapters', d.id)));
+        await Promise.all(deletes);
+
+        alert('Book deleted successfully!');
+        loadBooksForAdmin();
+    } catch (err) {
+        alert('Error deleting book: ' + err.message);
+    }
+}
+
+// ============================================================
+// CHAPTERS — FIREBASE
+// ============================================================
+async function loadChaptersForAdmin() {
     const bookSelect = document.getElementById('bookSelect');
     if (!bookSelect) return;
     bookSelect.innerHTML = '<option value="">Select a book...</option>';
 
-    books.forEach(book => {
-        const option = document.createElement('option');
-        option.value = book.id;
-        option.textContent = book.title;
-        bookSelect.appendChild(option);
-    });
+    try {
+        const snap = await getDocs(collection(db, 'books'));
+        books = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        books.forEach(book => {
+            const opt = document.createElement('option');
+            opt.value = book.id;
+            opt.textContent = book.title;
+            bookSelect.appendChild(opt);
+        });
+    } catch (err) {
+        console.error('Error loading books for chapter section:', err);
+    }
 
-    loadChapterList();                                     // FIX: loadchapterList -> loadChapterList (consistent naming)
+    loadChapterList();
 }
 
-function loadChapterList() {                               // FIX: renamed consistently
-    const bookSelect = document.getElementById('bookSelect');
+async function loadChapterList() {
+    const bookSelect  = document.getElementById('bookSelect');
     const chaptersList = document.getElementById('adminChaptersList');
     if (!chaptersList) return;
-    chaptersList.innerHTML = '';
 
-    const selectedBookId = bookSelect ? parseInt(bookSelect.value) : null;  // FIX: 'bookselect' -> 'bookSelect'
+    const selectedBookId = bookSelect ? bookSelect.value : null;
 
     if (!selectedBookId) {
         chaptersList.innerHTML = `
             <div class="empty-state">
                 <i class="fas fa-file-alt"></i>
                 <p>Select a book to view its chapters</p>
-            </div>
-        `;
+            </div>`;
         return;
     }
 
-    const bookChapters = chapters.filter(ch => ch.bookId === selectedBookId);
+    chaptersList.innerHTML = '<p style="color:#7f8c8d;padding:1rem">Loading...</p>';
 
-    if (bookChapters.length === 0) {
-        chaptersList.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-file-alt"></i>
-                <p>No chapters yet for this book.</p>
-            </div>
-        `;
-        return;
+    try {
+        const snap = await getDocs(query(collection(db, 'chapters'), orderBy('date', 'asc')));
+        const bookChapters = snap.docs
+            .map(d => ({ id: d.id, ...d.data() }))
+            .filter(c => c.bookId === selectedBookId);
+
+        if (bookChapters.length === 0) {
+            chaptersList.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-file-alt"></i>
+                    <p>No chapters yet for this book.</p>
+                </div>`;
+            return;
+        }
+
+        chaptersList.innerHTML = '';
+        bookChapters.forEach(chapter => {
+            const item = document.createElement('div');
+            item.className = 'chapter-item';
+            item.innerHTML = `
+                <div>
+                    <h4>${escHtml(chapter.title)}</h4>
+                    <p class="chapter-preview">${escHtml(chapter.content.substring(0, 120))}...</p>
+                    <small>Date: ${chapter.date}</small>
+                </div>
+                <div class="chapter-actions">
+                    <button class="edit-btn" onclick="editChapter('${chapter.id}')" title="Edit"><i class="fas fa-edit"></i></button>
+                    <button class="delete-btn" onclick="deleteChapter('${chapter.id}','${escHtml(chapter.title)}')" title="Delete"><i class="fas fa-trash"></i></button>
+                </div>
+            `;
+            chaptersList.appendChild(item);
+        });
+    } catch (err) {
+        chaptersList.innerHTML = `<p style="color:#e74c3c">Error loading chapters: ${err.message}</p>`;
     }
-
-    bookChapters.forEach((chapter, index) => {
-        const chapterItem = document.createElement('div');
-        chapterItem.className = 'chapter-item';
-        chapterItem.innerHTML = `
-            <div>
-                <h4>${chapter.title}</h4>
-                <p class="chapter-preview">${chapter.content.substring(0, 150)}...</p>
-                <small>Date: ${chapter.date}</small>
-            </div>
-            <div class="chapter-actions">
-                <button class="edit-btn" onclick="editChapter(${index})" title="Edit">
-                    <i class="fas fa-edit"></i>             <!-- FIX: 'fas fas-edit' -> 'fas fa-edit', missing quote -->
-                </button>
-                <button class="delete-btn" onclick="deleteChapter(${index})" title="Delete">
-                    <i class="fas fa-trash"></i>            <!-- FIX: same icon class fix -->
-                </button>
-            </div>
-        `;
-        chaptersList.appendChild(chapterItem);
-    });
 }
 
-function showAddChapterForm() {
-    const selectedBookId = document.getElementById('bookSelect').value;  // FIX: 'bookSelected' -> 'bookSelect'
-
-    if (!selectedBookId) {
-        alert('Please select a book first');
-        return;
-    }
-
+window.showAddChapterForm = function() {
+    const selectedBookId = document.getElementById('bookSelect').value;
+    if (!selectedBookId) { alert('Please select a book first'); return; }
     document.getElementById('addChapterModal').style.display = 'flex';
     document.getElementById('chapterDate').valueAsDate = new Date();
 }
 
-function addChapter() {
-    const title = document.getElementById('chapterTitleInput').value.trim();
+window.addChapter = async function() {
+    const title   = document.getElementById('chapterTitleInput').value.trim();
     const content = document.getElementById('chapterContent').value.trim();
-    const date = document.getElementById('chapterDate').value;
-    const bookId = document.getElementById('bookSelect').value;  // FIX: 'bookSelected' -> 'bookSelect'
+    const date    = document.getElementById('chapterDate').value;
+    const bookId  = document.getElementById('bookSelect').value;
 
-    if (!title || !content || !bookId) {
-        alert('Please fill in all required fields');
-        return;                                             // FIX: was missing return after alert
-    }
+    if (!title || !content || !bookId) { alert('Please fill in all required fields'); return; }
 
     const newChapter = {
-        id: Date.now(),
-        bookId: parseInt(bookId),
+        bookId,
         title,
         content,
         date: date || new Date().toISOString().split('T')[0]
     };
 
-    chapters.push(newChapter);
-    localStorage.setItem('lusales_chapters', JSON.stringify(chapters));
-    closeModal('addChapterModal');                         // FIX: closedModal -> closeModal
-    loadChapterList();
-    alert(`Chapter "${title}" added successfully!`);       // FIX: backticks for interpolation
-
-    document.getElementById('chapterTitleInput').value = '';
-    document.getElementById('chapterContent').value = '';
+    try {
+        await addDoc(collection(db, 'chapters'), newChapter);
+        closeModal('addChapterModal');
+        document.getElementById('chapterTitleInput').value = '';
+        document.getElementById('chapterContent').value = '';
+        alert(`Chapter "${title}" added successfully!`);
+        loadChapterList();
+    } catch (err) {
+        alert('Error adding chapter: ' + err.message);
+    }
 }
 
-function editChapter(index) {
-    const chapter = chapters[index];
-    const newTitle = prompt('Edit chapter title:', chapter.title);  // FIX: chapter,title -> chapter.title
-    if (newTitle) {
-        const newContent = prompt('Edit chapter content:', chapter.content);
+window.editChapter = async function(chapterId) {
+    const snap = await getDocs(collection(db, 'chapters'));
+    const chapter = snap.docs.find(d => d.id === chapterId)?.data();
+    if (!chapter) return;
 
-        chapters[index] = {                                // FIX: chapter[index] -> chapters[index]
-            ...chapter,
+    const newTitle   = prompt('Edit chapter title:', chapter.title);
+    if (!newTitle) return;
+    const newContent = prompt('Edit chapter content:', chapter.content);
+
+    try {
+        await updateDoc(doc(db, 'chapters', chapterId), {
             title: newTitle,
-            content: newContent
-        };
-
-        localStorage.setItem('lusales_chapters', JSON.stringify(chapters));
-        loadChapterList();
+            content: newContent || chapter.content
+        });
         alert('Chapter updated successfully!');
-    }
-}
-
-function deleteChapter(index) {
-    if (confirm(`Are you sure you want to delete "${chapters[index].title}"?`)) {  // FIX: backticks
-        chapters.splice(index, 1);
-        localStorage.setItem('lusales_chapters', JSON.stringify(chapters));
         loadChapterList();
-        alert('Chapter deleted successfully!');
+    } catch (err) {
+        alert('Error updating chapter: ' + err.message);
     }
 }
 
-// ============================================
-// UTILITY FUNCTIONS
-// ============================================
+window.deleteChapter = async function(chapterId, chapterTitle) {
+    if (!confirm(`Are you sure you want to delete "${chapterTitle}"?`)) return;
+    try {
+        await deleteDoc(doc(db, 'chapters', chapterId));
+        alert('Chapter deleted successfully!');
+        loadChapterList();
+    } catch (err) {
+        alert('Error deleting chapter: ' + err.message);
+    }
+}
 
-function closeModal(modalId) {                             // FIX: renamed from 'closedModal'
+// ============================================================
+// UTILITIES
+// ============================================================
+window.closeModal = function(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) modal.style.display = 'none';
 }
 
 function setupEventListeners() {
-    // Sidebar navigation
     sidebarBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            showSection(btn.dataset.section);
-        });
+        btn.addEventListener('click', () => showSection(btn.dataset.section));
     });
 
-    // Book selection for chapters
-    const bookSelect = document.getElementById('bookSelect');  // FIX: 'BookSelect' -> 'bookSelect'
-    if (bookSelect) {
-        bookSelect.addEventListener('change', loadChapterList);
-    }
+    const bookSelect = document.getElementById('bookSelect');
+    if (bookSelect) bookSelect.addEventListener('change', loadChapterList);
 
-    // Upload zone
-    const uploadZone = document.getElementById('uploadZone');
-    const fileUpload = document.getElementById('fileUpload');
-
-    if (uploadZone && fileUpload) {
-        uploadZone.addEventListener('click', () => {
-            fileUpload.click();
-        });
-
-        fileUpload.addEventListener('change', handleFileUpload);
-
-        uploadZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadZone.style.borderColor = '#3498db';
-            uploadZone.style.background = '#f0f8ff';
-        });
-
-        uploadZone.addEventListener('dragleave', () => {   // FIX: removed misplaced file-drop logic from dragleave
-            uploadZone.style.borderColor = '#ddd';
-            uploadZone.style.background = 'white';
-        });
-
-        uploadZone.addEventListener('drop', (e) => {       // FIX: moved drop logic to the correct 'drop' event
-            e.preventDefault();
-            uploadZone.style.borderColor = '#ddd';
-            uploadZone.style.background = 'white';
-            if (e.dataTransfer.files.length) {             // FIX: .file -> .files, lenght -> length
-                handleFileUpload({ target: { files: e.dataTransfer.files } });  // FIX: file -> files
-            }
-        });
-    }
-
-    // Close modals when clicking outside
     const modals = document.querySelectorAll('.modal');
     modals.forEach(modal => {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.style.display = 'none';
-            }
+        modal.addEventListener('click', e => {
+            if (e.target === modal) modal.style.display = 'none';
         });
     });
 }
 
-function handleFileUpload(event) {
-    const files = event.target.files;                      // FIX: .file -> .files
-    const uploadProgress = document.getElementById('uploadProgress');
+function escHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
-    if (!uploadProgress || !files || files.length === 0) return;
-
-    uploadProgress.style.display = 'block';
-    uploadProgress.innerHTML = `
-        <div class="uploading">
-            <i class="fas fa-spinner fa-spin"></i>
-            <h3>Uploading ${files.length} file(s)...</h3>   <!-- FIX: file.lenght -> files.length -->
-            <div class="progress-bar">
-                <div class="progress-fill"></div>           <!-- FIX: 'progess-fill' typo -->
-            </div>
-        </div>
-    `;
-
-    let progress = 0;
-    const interval = setInterval(() => {
-        progress += 20;
-        const progressFill = uploadProgress.querySelector('.progress-fill');  // FIX: 'progessFill' -> 'progressFill'
-        if (progressFill) {
-            progressFill.style.width = `${progress}%`;
-        }
-
-        if (progress >= 100) {
-            clearInterval(interval);
-            setTimeout(() => {
-                uploadProgress.innerHTML = `
-                    <div class="upload-complete">
-                        <i class="fas fa-check-circle" style="color: #27ae60; font-size: 3rem;"></i>
-                        <h3>Upload Complete!</h3>
-                        <p>${files.length} file(s) uploaded successfully.</p>   <!-- FIX: File.lenght -> files.length -->
-                        <p><small>Note: In a real implementation, files would be saved to a server.</small></p>
-                    </div>
-                `;
-            }, 500);
-        }
-    }, 200);
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
 }
