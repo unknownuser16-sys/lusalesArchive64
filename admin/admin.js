@@ -254,7 +254,7 @@ async function loadChapterList() {
     chaptersList.innerHTML = '<p style="color:#7f8c8d;padding:1rem">Loading...</p>';
 
     try {
-        const snap = await db.collection('chapters').where('bookId', '==', selectedBookId).orderBy('date', 'asc').get();
+        const snap = await db.collection('chapters').where('bookId', '==', selectedBookId).get();
         const bookChapters = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
         if (bookChapters.length === 0) {
