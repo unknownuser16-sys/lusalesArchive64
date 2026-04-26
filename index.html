@@ -6,6 +6,85 @@
     <title>Lusales Archive</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ── AUTH BUTTON IN NAV ── */
+        .auth-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: none;
+            border: 1px solid var(--border, #2a2a3a);
+            color: var(--text-muted, #7a7568);
+            padding: 0.4rem 0.9rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .auth-btn:hover {
+            border-color: #c8973a;
+            color: #c8973a;
+        }
+        .auth-btn img {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+        .user-menu {
+            position: relative;
+        }
+        .user-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: #13131a;
+            border: 1px solid #2a2a3a;
+            border-radius: 6px;
+            overflow: hidden;
+            min-width: 160px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            z-index: 200;
+        }
+        .user-menu:hover .user-dropdown,
+        .user-menu.open .user-dropdown {
+            display: block;
+        }
+        .user-dropdown a,
+        .user-dropdown button {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.75rem 1rem;
+            color: #7a7568;
+            font-size: 0.85rem;
+            text-decoration: none;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            font-family: inherit;
+        }
+        .user-dropdown a:hover,
+        .user-dropdown button:hover {
+            background: #1a1a24;
+            color: #e8e4d9;
+        }
+        .user-dropdown .signout-btn {
+            border-top: 1px solid #2a2a3a;
+            color: #c0392b;
+        }
+        .user-dropdown .signout-btn:hover {
+            background: rgba(192,57,43,0.1);
+            color: #e74c3c;
+        }
+    </style>
 </head>
 <body>
 
@@ -21,6 +100,17 @@
                 <div class="search-box">
                     <input type="text" placeholder="Search books...">
                     <button><i class="fas fa-search"></i></button>
+                </div>
+                <!-- Auth area -->
+                <div class="user-menu" id="userMenu">
+                    <button class="auth-btn" id="authBtn" onclick="handleAuthClick()">
+                        <i class="fab fa-google"></i> Sign in
+                    </button>
+                    <div class="user-dropdown" id="userDropdown">
+                        <button class="signout-btn" onclick="signOut()">
+                            <i class="fas fa-sign-out-alt"></i> Sign out
+                        </button>
+                    </div>
                 </div>
             </div>
             <button class="mobile-menu-btn">
@@ -64,6 +154,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
     <script src="main.js"></script>
 </body>
 </html>
