@@ -1,5 +1,5 @@
 // ============================================================
-// LUSALES ARCHIVE — MAIN SITE SCRIPT
+// LUSALES ARCHIVE — MAIN SITE SCRIPT (with Auth)
 // ============================================================
 
 const firebaseConfig = {
@@ -12,10 +12,13 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const db       = firebase.firestore();
+const auth     = firebase.auth();
+const provider = new firebase.auth.GoogleAuthProvider();
 
 let books    = [];
 let chapters = [];
+let currentUser = null;
 
 // ── INIT ─────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
@@ -23,6 +26,80 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderFeaturedBooks();
     renderRecentChapters();
     setupSearch();
+    setupAuth();
+});
+
+// ============================================================
+// AUTH
+// ============================================================
+function setupAuth() {
+    auth.onAuthStateChanged(user => {
+        currentUser = user;
+        updateAuthUI(user);
+    });
+}
+
+function updateAuthUI(user) {
+    const authBtn     = document.getElementById('authBtn');
+    const userDropdown = document.getElementById('userDropdown');
+    if (!authBtn) return;
+
+    if (user) {
+        // Show user avatar and name
+        authBtn.innerHTML = `
+            ${user.photoURL
+                ? `<img src="${user.photoURL}" alt="avatar">`
+                : `<i class="fas fa-user-circle"></i>`}
+            ${user.displayName ? user.displayName.split(' ')[0] : 'Account'}
+        `;
+        // Add bookmarks link to dropdown
+        if (userDropdown && !userDropdown.querySelector('.bookmarks-link')) {
+            const bookmarksLink = document.createElement('a');
+            bookmarksLink.href = '#recent';
+            bookmarksLink.className = 'bookmarks-link';
+            bookmarksLink.innerHTML = '<i class="fas fa-bookmark"></i> My Bookmarks';
+            userDropdown.insertBefore(bookmarksLink, userDropdown.firstChild);
+        }
+    } else {
+        authBtn.innerHTML = '<i class="fab fa-google"></i> Sign in';
+        // Remove bookmarks link if present
+        if (userDropdown) {
+            const bl = userDropdown.querySelector('.bookmarks-link');
+            if (bl) bl.remove();
+        }
+    }
+}
+
+function handleAuthClick() {
+    if (currentUser) {
+        // Toggle dropdown
+        const menu = document.getElementById('userMenu');
+        if (menu) menu.classList.toggle('open');
+    } else {
+        signIn();
+    }
+}
+
+function signIn() {
+    auth.signInWithPopup(provider).catch(err => {
+        console.error('Sign in error:', err);
+        alert('Sign in failed. Please try again.');
+    });
+}
+
+function signOut() {
+    auth.signOut().then(() => {
+        const menu = document.getElementById('userMenu');
+        if (menu) menu.classList.remove('open');
+    });
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', e => {
+    const menu = document.getElementById('userMenu');
+    if (menu && !menu.contains(e.target)) {
+        menu.classList.remove('open');
+    }
 });
 
 // ============================================================
@@ -65,11 +142,8 @@ function renderFeaturedBooks() {
         const card = document.createElement('div');
         card.className = 'book-card';
         card.onclick = () => {
-            if (firstChapter) {
-                window.location.href = `reader.html?chapter=${firstChapter.id}`;
-            } else {
-                alert('This book has no chapters yet.');
-            }
+            if (firstChapter) window.location.href = `reader.html?chapter=${firstChapter.id}`;
+            else alert('This book has no chapters yet.');
         };
         card.innerHTML = `
             <div class="book-cover" style="background:${book.coverColor || randomCover()}">
