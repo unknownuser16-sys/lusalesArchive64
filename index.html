@@ -6,102 +6,34 @@
     <title>Lusales Archive</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* ── AUTH BUTTON IN NAV ── */
-        .auth-btn {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: none;
-            border: 1px solid var(--border, #2a2a3a);
-            color: var(--text-muted, #7a7568);
-            padding: 0.4rem 0.9rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.75rem;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-        .auth-btn:hover {
-            border-color: #c8973a;
-            color: #c8973a;
-        }
-        .auth-btn img {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-        }
-        .user-menu {
-            position: relative;
-        }
-        .user-dropdown {
-            display: none;
-            position: absolute;
-            top: calc(100% + 8px);
-            right: 0;
-            background: #13131a;
-            border: 1px solid #2a2a3a;
-            border-radius: 6px;
-            overflow: hidden;
-            min-width: 160px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-            z-index: 200;
-        }
-        .user-menu:hover .user-dropdown,
-        .user-menu.open .user-dropdown {
-            display: block;
-        }
-        .user-dropdown a,
-        .user-dropdown button {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            padding: 0.75rem 1rem;
-            color: #7a7568;
-            font-size: 0.85rem;
-            text-decoration: none;
-            background: none;
-            border: none;
-            width: 100%;
-            text-align: left;
-            cursor: pointer;
-            transition: background 0.2s, color 0.2s;
-            font-family: inherit;
-        }
-        .user-dropdown a:hover,
-        .user-dropdown button:hover {
-            background: #1a1a24;
-            color: #e8e4d9;
-        }
-        .user-dropdown .signout-btn {
-            border-top: 1px solid #2a2a3a;
-            color: #c0392b;
-        }
-        .user-dropdown .signout-btn:hover {
-            background: rgba(192,57,43,0.1);
-            color: #e74c3c;
-        }
-    </style>
+    <!-- Load theme instantly before paint to avoid flash -->
+    <script>
+        (function() {
+            const saved = localStorage.getItem('lusales_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+        })();
+    </script>
 </head>
 <body>
 
     <nav class="navbar">
         <div class="container">
             <div class="logo">
-                <h1><i class="fas fa-book"></i> lusaleArchive</h1>
+                <h1 onclick="window.scrollTo({top:0,behavior:'smooth'})">
+                    <i class="fas fa-book"></i> lusaleArchive
+                </h1>
             </div>
             <div class="nav-links">
                 <a href="#home">Home</a>
                 <a href="#library">Library</a>
                 <a href="#recent">Recent</a>
                 <div class="search-box">
-                    <input type="text" placeholder="Search books...">
-                    <button><i class="fas fa-search"></i></button>
+                    <input type="text" placeholder="Search books..." id="searchInput">
+                    <button id="searchBtn"><i class="fas fa-search"></i></button>
                 </div>
-                <!-- Auth area -->
+                <!-- Theme switcher -->
+                <div id="themeSwitcherMount"></div>
+                <!-- Auth -->
                 <div class="user-menu" id="userMenu">
                     <button class="auth-btn" id="authBtn" onclick="handleAuthClick()">
                         <i class="fab fa-google"></i> Sign in
@@ -113,9 +45,7 @@
                     </div>
                 </div>
             </div>
-            <button class="mobile-menu-btn">
-                <i class="fas fa-bars"></i>
-            </button>
+            <button class="mobile-menu-btn"><i class="fas fa-bars"></i></button>
         </div>
     </nav>
 
@@ -124,18 +54,37 @@
         <section class="hero" id="home">
             <div class="hero-content">
                 <h2>Welcome to the Archive</h2>
-                <p>A collection of stories and chapters, updated regularly.</p>
+                <p>A collection of original stories and chapters, updated regularly.</p>
                 <div class="hero-divider">— ✦ —</div>
+            </div>
+            <!-- Live stats -->
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <span class="stat-number" id="statBooks">—</span>
+                    <span class="stat-label">Books</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="statChapters">—</span>
+                    <span class="stat-label">Chapters</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="statUpdated">—</span>
+                    <span class="stat-label">Last Update</span>
+                </div>
             </div>
         </section>
 
         <section class="featured-books" id="library">
-            <h2><i class="fas fa-star"></i> Featured Books</h2>
+            <div class="section-header">
+                <h2><i class="fas fa-star"></i> Featured Books</h2>
+            </div>
             <div class="books-grid" id="featuredBooks"></div>
         </section>
 
         <section class="recent-chapters" id="recent">
-            <h2><i class="fas fa-clock"></i> Recent Updates</h2>
+            <div class="section-header">
+                <h2><i class="fas fa-clock"></i> Recent Updates</h2>
+            </div>
             <div class="chapters-list" id="recentChapters"></div>
         </section>
 
@@ -143,7 +92,7 @@
 
     <footer>
         <div class="container">
-            <p>&copy; 2025 Lusales Archive. All rights reserved.</p>
+            <p>&copy; 2025 Lusales Archive · All rights reserved.</p>
             <div class="footer-links">
                 <a href="#privacy">Privacy</a>
                 <a href="#terms">Terms</a>
@@ -155,6 +104,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+    <script src="theme.js"></script>
     <script src="main.js"></script>
 </body>
 </html>
