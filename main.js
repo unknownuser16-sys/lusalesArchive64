@@ -1,5 +1,5 @@
 // ============================================================
-// LUSALES ARCHIVE — MAIN SITE SCRIPT (with Auth)
+// LUSALES ARCHIVE — MAIN SITE SCRIPT
 // ============================================================
 
 const firebaseConfig = {
@@ -16,94 +16,32 @@ const db       = firebase.firestore();
 const auth     = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
 
-let books    = [];
-let chapters = [];
+let books       = [];
+let chapters    = [];
 let currentUser = null;
 
 // ── INIT ─────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-    await loadData();
-    renderFeaturedBooks();
-    renderRecentChapters();
-    setupSearch();
-    setupAuth();
-});
+    // Theme
+    loadSavedTheme();
+    buildThemeSwitcher('themeSwitcherMount');
 
-// ============================================================
-// AUTH
-// ============================================================
-function setupAuth() {
+    // Auth
     auth.onAuthStateChanged(user => {
         currentUser = user;
         updateAuthUI(user);
     });
-}
 
-function updateAuthUI(user) {
-    const authBtn     = document.getElementById('authBtn');
-    const userDropdown = document.getElementById('userDropdown');
-    if (!authBtn) return;
-
-    if (user) {
-        // Show user avatar and name
-        authBtn.innerHTML = `
-            ${user.photoURL
-                ? `<img src="${user.photoURL}" alt="avatar">`
-                : `<i class="fas fa-user-circle"></i>`}
-            ${user.displayName ? user.displayName.split(' ')[0] : 'Account'}
-        `;
-        // Add bookmarks link to dropdown
-        if (userDropdown && !userDropdown.querySelector('.bookmarks-link')) {
-            const bookmarksLink = document.createElement('a');
-            bookmarksLink.href = '#recent';
-            bookmarksLink.className = 'bookmarks-link';
-            bookmarksLink.innerHTML = '<i class="fas fa-bookmark"></i> My Bookmarks';
-            userDropdown.insertBefore(bookmarksLink, userDropdown.firstChild);
-        }
-    } else {
-        authBtn.innerHTML = '<i class="fab fa-google"></i> Sign in';
-        // Remove bookmarks link if present
-        if (userDropdown) {
-            const bl = userDropdown.querySelector('.bookmarks-link');
-            if (bl) bl.remove();
-        }
-    }
-}
-
-function handleAuthClick() {
-    if (currentUser) {
-        // Toggle dropdown
-        const menu = document.getElementById('userMenu');
-        if (menu) menu.classList.toggle('open');
-    } else {
-        signIn();
-    }
-}
-
-function signIn() {
-    auth.signInWithPopup(provider).catch(err => {
-        console.error('Sign in error:', err);
-        alert('Sign in failed. Please try again.');
-    });
-}
-
-function signOut() {
-    auth.signOut().then(() => {
-        const menu = document.getElementById('userMenu');
-        if (menu) menu.classList.remove('open');
-    });
-}
-
-// Close dropdown when clicking outside
-document.addEventListener('click', e => {
-    const menu = document.getElementById('userMenu');
-    if (menu && !menu.contains(e.target)) {
-        menu.classList.remove('open');
-    }
+    // Data
+    await loadData();
+    renderFeaturedBooks();
+    renderRecentChapters();
+    updateStats();
+    setupSearch();
 });
 
 // ============================================================
-// LOAD DATA
+// DATA
 // ============================================================
 async function loadData() {
     try {
@@ -121,7 +59,66 @@ async function loadData() {
 }
 
 // ============================================================
-// FEATURED BOOKS
+// STATS BAR
+// ============================================================
+function updateStats() {
+    const statBooks    = document.getElementById('statBooks');
+    const statChapters = document.getElementById('statChapters');
+    const statUpdated  = document.getElementById('statUpdated');
+
+    if (statBooks)    statBooks.textContent    = books.length;
+    if (statChapters) statChapters.textContent = chapters.length;
+
+    if (statUpdated && chapters.length > 0) {
+        const latest = chapters[0].date;
+        statUpdated.textContent = latest
+            ? new Date(latest).toLocaleDateString('en-GB', { day:'numeric', month:'short' })
+            : '—';
+    }
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+function updateAuthUI(user) {
+    const authBtn      = document.getElementById('authBtn');
+    const userDropdown = document.getElementById('userDropdown');
+    if (!authBtn) return;
+
+    if (user) {
+        authBtn.innerHTML = user.photoURL
+            ? `<img src="${user.photoURL}" alt=""> ${user.displayName ? user.displayName.split(' ')[0] : 'Account'}`
+            : `<i class="fas fa-user-circle"></i> ${user.displayName ? user.displayName.split(' ')[0] : 'Account'}`;
+    } else {
+        authBtn.innerHTML = '<i class="fab fa-google"></i> Sign in';
+        if (userDropdown) {
+            const bl = userDropdown.querySelector('.bookmarks-link');
+            if (bl) bl.remove();
+        }
+    }
+}
+
+function handleAuthClick() {
+    if (currentUser) {
+        document.getElementById('userMenu')?.classList.toggle('open');
+    } else {
+        auth.signInWithPopup(provider).catch(() => alert('Sign in failed. Please try again.'));
+    }
+}
+
+function signOut() {
+    auth.signOut().then(() => {
+        document.getElementById('userMenu')?.classList.remove('open');
+    });
+}
+
+document.addEventListener('click', e => {
+    const menu = document.getElementById('userMenu');
+    if (menu && !menu.contains(e.target)) menu.classList.remove('open');
+});
+
+// ============================================================
+// BOOKS
 // ============================================================
 function renderFeaturedBooks() {
     const grid = document.getElementById('featuredBooks');
@@ -135,9 +132,7 @@ function renderFeaturedBooks() {
     grid.innerHTML = '';
     books.forEach(book => {
         const bookChapters = chapters.filter(c => c.bookId === book.id);
-        const firstChapter = bookChapters.length > 0
-            ? [...bookChapters].sort((a,b) => new Date(a.date)-new Date(b.date))[0]
-            : null;
+        const firstChapter = [...bookChapters].sort((a,b) => new Date(a.date)-new Date(b.date))[0];
 
         const card = document.createElement('div');
         card.className = 'book-card';
@@ -190,11 +185,11 @@ function renderRecentChapters() {
 // SEARCH
 // ============================================================
 function setupSearch() {
-    const input  = document.querySelector('.search-box input');
-    const button = document.querySelector('.search-box button');
+    const input = document.getElementById('searchInput');
+    const btn   = document.getElementById('searchBtn');
 
     function doSearch() {
-        const q = input.value.trim().toLowerCase();
+        const q = input?.value.trim().toLowerCase();
         if (!q) { renderFeaturedBooks(); return; }
 
         const results = books.filter(b =>
@@ -214,10 +209,7 @@ function setupSearch() {
         grid.innerHTML = '';
         results.forEach(book => {
             const bookChapters = chapters.filter(c => c.bookId === book.id);
-            const firstChapter = bookChapters.length > 0
-                ? [...bookChapters].sort((a,b) => new Date(a.date)-new Date(b.date))[0]
-                : null;
-
+            const firstChapter = [...bookChapters].sort((a,b) => new Date(a.date)-new Date(b.date))[0];
             const card = document.createElement('div');
             card.className = 'book-card';
             card.onclick = () => {
@@ -239,8 +231,8 @@ function setupSearch() {
         grid.scrollIntoView({ behavior: 'smooth' });
     }
 
-    if (button) button.onclick = doSearch;
-    if (input)  input.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+    if (btn)   btn.onclick = doSearch;
+    if (input) input.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
 }
 
 // ============================================================
