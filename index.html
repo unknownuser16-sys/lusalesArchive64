@@ -12,44 +12,56 @@
 
 <nav class="navbar">
     <div class="container">
-        <div class="logo"><a href="index.html"><i class="fas fa-book"></i> lusaleArchive</a></div>
-        <div class="nav-links">
+        <div class="logo">
+            <a href="index.html"><i class="fas fa-book"></i> lusaleArchive</a>
+        </div>
+
+        <!-- Desktop nav -->
+        <div class="nav-links" id="navLinks">
             <a href="index.html" class="active">Home</a>
             <a href="library.html">Library</a>
             <a href="recent.html">Recent</a>
         </div>
+
+        <!-- Desktop right side -->
         <div class="nav-right">
             <div class="search-box">
-                <input type="text" placeholder="Search books..." id="searchInput">
-                <button onclick="doSearch()"><i class="fas fa-search"></i></button>
+                <input type="text" id="searchInput" placeholder="Search books...">
+                <button id="searchBtn"><i class="fas fa-search"></i></button>
             </div>
             <div id="themeSwitcherMount"></div>
             <div class="user-menu" id="userMenu">
-                <button class="auth-btn" id="authBtn" onclick="handleAuthClick()">
+                <button class="auth-btn" id="authBtn">
                     <i class="fab fa-google"></i> Sign in
                 </button>
                 <div class="user-dropdown" id="userDropdown">
                     <a href="dashboard.html"><i class="fas fa-gauge"></i> Dashboard</a>
-                    <button class="signout-btn" onclick="signOutUser()"><i class="fas fa-sign-out-alt"></i> Sign out</button>
+                    <button class="signout-btn" id="signoutBtn"><i class="fas fa-sign-out-alt"></i> Sign out</button>
                 </div>
             </div>
         </div>
-        <button class="mobile-menu-btn"><i class="fas fa-bars"></i></button>
+
+        <!-- Mobile hamburger -->
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+            <i class="fas fa-bars"></i>
+        </button>
     </div>
 </nav>
 
-<!-- Mobile menu -->
+<!-- Mobile dropdown menu -->
 <div class="mobile-menu" id="mobileMenu">
     <div class="mobile-search">
-        <input type="text" placeholder="Search books..." id="mobileSearchInput">
-        <button onclick="doMobileSearch()"><i class="fas fa-search"></i></button>
+        <input type="text" id="mobileSearchInput" placeholder="Search books...">
+        <button id="mobileSearchBtn"><i class="fas fa-search"></i></button>
     </div>
     <a href="index.html"><i class="fas fa-house"></i> Home</a>
     <a href="library.html"><i class="fas fa-book-open"></i> Library</a>
     <a href="recent.html"><i class="fas fa-clock"></i> Recent</a>
     <a href="dashboard.html"><i class="fas fa-gauge"></i> Dashboard</a>
     <div class="mobile-menu-divider"></div>
-    <div id="mobileAuth"></div>
+    <div id="mobileAuth">
+        <button class="mobile-signin" id="mobileSigninBtn"><i class="fab fa-google"></i> Sign in</button>
+    </div>
 </div>
 
 <!-- Hero -->
@@ -86,7 +98,15 @@
 <script src="theme.js"></script>
 <script src="nav.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', () => initNav());
+    document.addEventListener('DOMContentLoaded', () => {
+        initNav();
+
+        // Search
+        document.getElementById('searchBtn')?.addEventListener('click', doSearch);
+        document.getElementById('searchInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+        document.getElementById('mobileSearchBtn')?.addEventListener('click', doMobileSearch);
+        document.getElementById('mobileSearchInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') doMobileSearch(); });
+    });
 
     function doSearch() {
         const q = document.getElementById('searchInput')?.value.trim();
@@ -97,9 +117,6 @@
         const q = document.getElementById('mobileSearchInput')?.value.trim();
         if (q) window.location.href = `library.html?search=${encodeURIComponent(q)}`;
     }
-
-    document.getElementById('searchInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
-    document.getElementById('mobileSearchInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') doMobileSearch(); });
 </script>
 </body>
 </html>
