@@ -6,48 +6,9 @@
     <title>Reading — Lusales Archive</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <script>
-        (function() {
-            const saved = localStorage.getItem('lusales_theme') || 'dark';
-            document.documentElement.setAttribute('data-theme', saved);
-        })();
-    </script>
+    <link rel="stylesheet" href="style.css">
     <style>
-        :root {
-            --bg:          #0d0d0f;
-            --bg-card:     #13131a;
-            --bg-hover:    #1a1a24;
-            --border:      #2a2a3a;
-            --accent:      #c8973a;
-            --accent-dim:  #7a5820;
-            --accent-glow: rgba(200,151,58,0.15);
-            --text:        #e8e4d9;
-            --text-muted:  #7a7568;
-            --text-dim:    #3a3830;
-            --nav-bg:      rgba(13,13,15,0.95);
-            --shadow:      0 8px 32px rgba(0,0,0,0.5);
-            --font-display: 'Playfair Display', Georgia, serif;
-            --font-body:    'Crimson Text', Georgia, serif;
-            --font-mono:    'JetBrains Mono', monospace;
-        }
-
-        *, *::before, *::after {
-            box-sizing: border-box; margin: 0; padding: 0;
-            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
-        }
-
-        html { scroll-behavior: smooth; }
-
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: var(--font-body);
-            font-size: 1.2rem;
-            line-height: 1.85;
-            min-height: 100vh;
-        }
-
-        /* ── TOP BAR ── */
+        /* Additional reader-specific styles that depend on CSS variables */
         .reader-bar {
             position: fixed; top: 0; left: 0; right: 0; z-index: 100;
             height: 56px;
@@ -59,205 +20,103 @@
             padding: 0 2rem; gap: 1rem;
             transition: opacity 0.4s, transform 0.4s;
         }
-
         .reader-bar.hidden { opacity: 0; transform: translateY(-100%); pointer-events: none; }
-
         .bar-left { display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0; }
-
         .back-btn {
             background: none; border: 1px solid var(--border); color: var(--text-muted);
             padding: 0.35rem 0.85rem; border-radius: 4px; cursor: pointer;
-            font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.05em;
-            display: flex; align-items: center; gap: 0.4rem;
-            transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
+            font-family: var(--font-mono); font-size: 0.75rem; display: flex; align-items: center; gap: 0.4rem;
         }
         .back-btn:hover { border-color: var(--accent); color: var(--accent); }
-
         .bar-title {
             font-family: var(--font-display); font-size: 0.95rem;
-            color: var(--text-muted); white-space: nowrap;
-            overflow: hidden; text-overflow: ellipsis;
+            color: var(--text-muted); overflow: hidden; text-overflow: ellipsis;
         }
         .bar-title span { color: var(--accent); }
-
         .bar-right { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
-
         .bar-btn {
             background: none; border: 1px solid var(--border); color: var(--text-muted);
-            padding: 0.35rem 0.6rem; border-radius: 4px; cursor: pointer;
-            font-size: 0.8rem; transition: all 0.2s;
+            padding: 0.35rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;
         }
-        .bar-btn:hover { border-color: var(--accent); color: var(--accent); }
-        .bar-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
-
+        .bar-btn:hover, .bar-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
         .bar-auth-btn {
             background: none; border: 1px solid var(--border); color: var(--text-muted);
             padding: 0.35rem 0.75rem; border-radius: 4px; cursor: pointer;
-            font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.05em;
-            display: flex; align-items: center; gap: 0.4rem;
-            transition: all 0.2s; white-space: nowrap;
+            font-family: var(--font-mono); font-size: 0.72rem; display: flex; align-items: center; gap: 0.4rem;
         }
         .bar-auth-btn:hover { border-color: var(--accent); color: var(--accent); }
         .bar-auth-btn img { width: 16px; height: 16px; border-radius: 50%; }
-
-        /* ── THEME SWITCHER (reused from theme.js styles) ── */
-        .theme-switcher { position: relative; }
-        .theme-toggle-btn {
-            background: none; border: 1px solid var(--border); color: var(--text-muted);
-            padding: 0.35rem 0.6rem; border-radius: 4px; cursor: pointer;
-            font-size: 0.85rem; display: flex; align-items: center; transition: all 0.2s;
-        }
-        .theme-toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
-        .theme-panel {
-            display: none; position: absolute; top: calc(100% + 10px); right: 0;
-            background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: 6px; overflow: hidden; min-width: 180px;
-            box-shadow: var(--shadow); z-index: 300;
-        }
-        .theme-panel.open { display: block; }
-        .theme-panel-header {
-            padding: 0.6rem 1rem; font-family: var(--font-mono); font-size: 0.7rem;
-            letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim);
-            border-bottom: 1px solid var(--border);
-        }
-        .theme-options { padding: 0.4rem; display: flex; flex-direction: column; gap: 0.2rem; }
-        .theme-option {
-            display: flex; align-items: center; gap: 0.75rem;
-            padding: 0.6rem 0.75rem; background: none; border: 1px solid transparent;
-            border-radius: 4px; cursor: pointer; color: var(--text-muted);
-            font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.04em;
-            width: 100%; text-align: left; transition: all 0.2s;
-        }
-        .theme-option:hover { background: var(--bg-hover); color: var(--text); }
-        .theme-option.active { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
-        .theme-icon { font-size: 1rem; }
-        .custom-theme-editor { padding: 0.75rem; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.5rem; }
-        .color-row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-        .color-row label { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.05em; }
-        .color-row input[type="color"] { width: 36px; height: 24px; border: 1px solid var(--border); border-radius: 3px; cursor: pointer; background: none; padding: 1px; }
-        .apply-custom-btn { background: var(--accent); color: var(--bg); border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.05em; font-weight: 600; margin-top: 0.25rem; transition: opacity 0.2s; }
-        .apply-custom-btn:hover { opacity: 0.85; }
-
-        /* ── PROGRESS ── */
         .progress-bar {
             position: fixed; top: 56px; left: 0; height: 2px;
             background: var(--accent); width: 0%; z-index: 99; transition: width 0.1s;
         }
-
-        /* ── READER PAGE ── */
         .reader-page { max-width: 680px; margin: 0 auto; padding: 100px 2rem 120px; }
-
         .chapter-header { margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
-        .book-label { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem; display: block; }
-        .chapter-header h1 { font-family: var(--font-display); font-size: clamp(1.8rem,4vw,2.8rem); font-weight: 700; color: var(--text); line-height: 1.2; margin-bottom: 1rem; }
-        .chapter-meta { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted); letter-spacing: 0.05em; }
-
-        /* ── RATINGS ── */
+        .book-label { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); }
+        .chapter-header h1 { font-family: var(--font-display); font-size: clamp(1.8rem,4vw,2.8rem); margin-bottom: 1rem; }
+        .chapter-meta { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted); }
         .rating-section { margin: 2rem 0; padding: 1.5rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; }
-        .rating-section h4 { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem; }
+        .rating-section h4 { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1rem; }
         .stars { display: flex; gap: 0.4rem; margin-bottom: 0.75rem; }
-        .star { font-size: 1.6rem; color: var(--text-dim); cursor: pointer; transition: color 0.15s, transform 0.15s; }
+        .star { font-size: 1.6rem; color: var(--text-dim); cursor: pointer; transition: color 0.15s; }
         .star:hover, .star.filled { color: var(--accent); }
-        .star:hover { transform: scale(1.2); }
         .rating-info { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); }
         .rating-info span { color: var(--accent); }
-
-        /* ── CHAPTER BODY ── */
-        .chapter-body p { margin-bottom: 1.6em; text-indent: 2em; color: var(--text); }
+        .chapter-body p { margin-bottom: 1.6em; text-indent: 2em; }
         .chapter-body p:first-child { text-indent: 0; }
         .chapter-body p:first-child::first-letter {
             font-family: var(--font-display); font-size: 3.8em; font-weight: 700;
             color: var(--accent); float: left; line-height: 0.75;
             margin-right: 0.08em; margin-top: 0.12em;
         }
-
-        /* ── DIVIDER ── */
-        .chapter-divider { color: var(--accent-dim); font-family: var(--font-display); letter-spacing: 0.4em; font-size: 0.85rem; text-align: center; margin: 3rem 0; }
-
-        /* ── CHAPTER NAV ── */
-        .chapter-nav { padding-top: 2rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 4rem; }
-        .nav-btn { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); padding: 0.9rem 1.5rem; border-radius: 6px; cursor: pointer; font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.06em; display: flex; align-items: center; gap: 0.6rem; transition: all 0.25s; max-width: 45%; }
+        .chapter-divider { color: var(--accent-dim); font-family: var(--font-display); letter-spacing: 0.4em; text-align: center; margin: 3rem 0; }
+        .chapter-nav { padding-top: 2rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 2rem; }
+        .nav-btn { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); padding: 0.9rem 1.5rem; border-radius: 6px; cursor: pointer; font-family: var(--font-mono); font-size: 0.78rem; display: flex; align-items: center; gap: 0.6rem; max-width: 45%; }
         .nav-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
-        .nav-btn.disabled { opacity: 0.25; cursor: not-allowed; pointer-events: none; }
+        .nav-btn.disabled { opacity: 0.25; pointer-events: none; }
         .nav-btn-inner { display: flex; flex-direction: column; gap: 0.15rem; }
-        .nav-label { font-size: 0.65rem; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; }
-        .nav-title { font-size: 0.82rem; color: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
-
-        /* ── COMMENTS ── */
-        .comments-section { padding-top: 2.5rem; border-top: 1px solid var(--border); }
-        .comments-section > h4 { font-family: var(--font-display); font-size: 1.2rem; color: var(--text); margin-bottom: 2rem; display: flex; align-items: center; gap: 0.5rem; }
-        .comments-section > h4 i { color: var(--accent); font-size: 1rem; }
-
-        .comment-form { margin-bottom: 2rem; }
-        .comment-form textarea { width: 100%; background: var(--bg-card); border: 1px solid var(--border); color: var(--text); padding: 1rem; border-radius: 6px; font-family: var(--font-body); font-size: 1rem; line-height: 1.6; resize: vertical; min-height: 100px; outline: none; transition: border-color 0.2s; box-sizing: border-box; }
-        .comment-form textarea:focus { border-color: var(--accent); }
-        .comment-form textarea::placeholder { color: var(--text-dim); }
+        .nav-label { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; }
+        .nav-title { font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+        .comments-section { padding-top: 2rem; border-top: 1px solid var(--border); }
+        .comments-section > h4 { font-family: var(--font-display); font-size: 1.2rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 0.5rem; }
+        .comment-form textarea { width: 100%; background: var(--bg-card); border: 1px solid var(--border); color: var(--text); padding: 1rem; border-radius: 6px; font-family: var(--font-body); font-size: 1rem; resize: vertical; min-height: 100px; }
+        .comment-form textarea:focus { border-color: var(--accent); outline: none; }
         .comment-form-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 0.75rem; gap: 1rem; }
-        .comment-user-info { display: flex; align-items: center; gap: 0.6rem; font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); }
+        .comment-user-info { display: flex; align-items: center; gap: 0.6rem; font-family: var(--font-mono); font-size: 0.75rem; }
         .comment-user-info img { width: 22px; height: 22px; border-radius: 50%; }
-        .submit-comment-btn { background: var(--accent); color: var(--bg); border: none; padding: 0.6rem 1.25rem; border-radius: 4px; cursor: pointer; font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.05em; font-weight: 600; transition: opacity 0.2s; white-space: nowrap; }
-        .submit-comment-btn:hover { opacity: 0.85; }
-        .submit-comment-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
+        .submit-comment-btn { background: var(--accent); color: var(--bg); border: none; padding: 0.6rem 1.25rem; border-radius: 4px; cursor: pointer; font-family: var(--font-mono); font-weight: 600; }
+        .submit-comment-btn:disabled { opacity: 0.4; }
         .comment-login-prompt { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 1.5rem; text-align: center; margin-bottom: 2rem; }
-        .comment-login-prompt p { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem; }
-        .comment-login-prompt button { background: none; border: 1px solid var(--accent-dim); color: var(--accent); padding: 0.5rem 1.25rem; border-radius: 4px; cursor: pointer; font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.05em; transition: all 0.2s; }
-        .comment-login-prompt button:hover { background: var(--accent-glow); }
-
         .comments-list { display: flex; flex-direction: column; gap: 1.25rem; }
         .comment-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 1.25rem; }
-        .comment-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; gap: 1rem; }
+        .comment-header { display: flex; justify-content: space-between; margin-bottom: 0.75rem; }
         .comment-author { display: flex; align-items: center; gap: 0.6rem; }
-        .comment-author img { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border); }
-        .comment-author-info { display: flex; flex-direction: column; gap: 0.1rem; }
-        .comment-name { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text); letter-spacing: 0.02em; }
+        .comment-author img { width: 28px; height: 28px; border-radius: 50%; }
+        .comment-name { font-family: var(--font-mono); font-size: 0.8rem; }
         .comment-date { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); }
-        .comment-delete-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 0.8rem; padding: 0.2rem 0.4rem; border-radius: 3px; transition: color 0.2s; flex-shrink: 0; }
+        .comment-delete-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; }
         .comment-delete-btn:hover { color: #e74c3c; }
-        .comment-text { font-size: 1rem; line-height: 1.65; color: var(--text); }
-        .comments-empty { text-align: center; padding: 2.5rem; color: var(--text-dim); font-family: var(--font-mono); font-size: 0.8rem; letter-spacing: 0.05em; border: 1px dashed var(--border); border-radius: 6px; }
-        .comments-loading { text-align: center; padding: 2rem; color: var(--text-dim); font-family: var(--font-mono); font-size: 0.78rem; }
-
-        /* ── TOAST ── */
-        .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--bg-card); border: 1px solid var(--border); color: var(--text); padding: 0.75rem 1.5rem; border-radius: 6px; font-family: var(--font-mono); font-size: 0.8rem; z-index: 500; transition: transform 0.3s; white-space: nowrap; box-shadow: var(--shadow); }
+        .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--bg-card); border: 1px solid var(--border); padding: 0.75rem 1.5rem; border-radius: 6px; font-family: var(--font-mono); font-size: 0.8rem; z-index: 500; transition: transform 0.3s; }
         .toast.show { transform: translateX(-50%) translateY(0); }
-
-        /* ── LOADING / ERROR ── */
         .loading-screen { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 999; transition: opacity 0.5s; }
         .loading-screen.fade-out { opacity: 0; pointer-events: none; }
-        .loading-inner { text-align: center; }
-        .loading-inner i { font-size: 2rem; color: var(--accent); animation: spin 1.5s linear infinite; display: block; margin-bottom: 1rem; }
-        .loading-inner p { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); letter-spacing: 0.1em; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
         .error-screen { display: none; text-align: center; padding: 6rem 2rem; }
-        .error-screen i { font-size: 3rem; color: var(--accent-dim); display: block; margin-bottom: 1.5rem; }
-        .error-screen h2 { font-family: var(--font-display); font-size: 1.8rem; margin-bottom: 1rem; color: var(--text); }
-        .error-screen p { color: var(--text-muted); margin-bottom: 2rem; }
-        .error-screen a { font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent); border: 1px solid var(--accent-dim); padding: 0.6rem 1.5rem; border-radius: 4px; text-decoration: none; transition: all 0.2s; }
-        .error-screen a:hover { background: var(--accent-glow); }
-
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: var(--bg); }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
-
         @media (max-width: 600px) {
             .reader-page { padding: 90px 1.25rem 100px; }
             .reader-bar { padding: 0 1rem; }
             .bar-title { display: none; }
-            .nav-title { max-width: 100px; }
         }
     </style>
+    <script>
+        (function() {
+            const saved = localStorage.getItem('lusales_theme') || 'black';
+            document.documentElement.setAttribute('data-theme', saved);
+        })();
+    </script>
 </head>
 <body>
 
-<div class="loading-screen" id="loadingScreen">
-    <div class="loading-inner">
-        <i class="fas fa-book-open"></i>
-        <p>Opening chapter...</p>
-    </div>
-</div>
+<div class="loading-screen" id="loadingScreen"><div class="loading-inner"><i class="fas fa-book-open"></i><p>Opening chapter...</p></div></div>
 
 <div class="reader-bar" id="readerBar">
     <div class="bar-left">
@@ -265,27 +124,40 @@
         <span class="bar-title" id="barTitle">Loading...</span>
     </div>
     <div class="bar-right">
-        <button class="bar-btn" id="bookmarkBtn" onclick="toggleBookmark()" title="Bookmark"><i class="far fa-bookmark"></i></button>
-        <button class="bar-btn" onclick="changeFontSize(-1)" title="Smaller">A-</button>
-        <button class="bar-btn" onclick="changeFontSize(1)" title="Larger">A+</button>
+        <button class="bar-btn" id="bookmarkBtn" onclick="toggleBookmark()"><i class="far fa-bookmark"></i></button>
+        <button class="bar-btn" onclick="changeFontSize(-1)">A-</button>
+        <button class="bar-btn" onclick="changeFontSize(1)">A+</button>
         <div id="readerThemeMount"></div>
         <button class="bar-auth-btn" id="barAuthBtn" onclick="handleBarAuth()"><i class="fab fa-google"></i> Sign in</button>
     </div>
 </div>
-
 <div class="progress-bar" id="progressBar"></div>
 <div class="toast" id="toast"></div>
 
 <div class="reader-page" id="readerPage" style="display:none">
-
     <div class="chapter-header">
         <span class="book-label" id="bookLabel">— book —</span>
         <h1 id="chapterTitle">Chapter Title</h1>
         <div class="chapter-meta" id="chapterMeta"></div>
     </div>
 
+    <div class="chapter-body" id="chapterBody"></div>
+    <div class="chapter-divider">— ✦ —</div>
+
+    <div class="chapter-nav">
+        <button class="nav-btn disabled" id="prevBtn" onclick="navigateChapter(-1)">
+            <i class="fas fa-chevron-left"></i>
+            <div class="nav-btn-inner"><span class="nav-label">Previous</span><span class="nav-title" id="prevTitle">—</span></div>
+        </button>
+        <button class="nav-btn disabled" id="nextBtn" onclick="navigateChapter(1)">
+            <div class="nav-btn-inner" style="text-align:right"><span class="nav-label">Next</span><span class="nav-title" id="nextTitle">—</span></div>
+            <i class="fas fa-chevron-right"></i>
+        </button>
+    </div>
+
+    <!-- Rating section moved here (below chapter nav) -->
     <div class="rating-section">
-        <h4><i class="fas fa-star"></i> &nbsp;Rate this book</h4>
+        <h4><i class="fas fa-star"></i> Rate this book</h4>
         <div class="stars" id="starsContainer">
             <i class="far fa-star star" data-value="1"></i>
             <i class="far fa-star star" data-value="2"></i>
@@ -296,40 +168,15 @@
         <div class="rating-info" id="ratingInfo">Loading ratings...</div>
     </div>
 
-    <div class="chapter-body" id="chapterBody"></div>
-
-    <div class="chapter-divider">— ✦ —</div>
-
-    <div class="chapter-nav">
-        <button class="nav-btn disabled" id="prevBtn" onclick="navigateChapter(-1)">
-            <i class="fas fa-chevron-left"></i>
-            <div class="nav-btn-inner">
-                <span class="nav-label">Previous</span>
-                <span class="nav-title" id="prevTitle">—</span>
-            </div>
-        </button>
-        <button class="nav-btn disabled" id="nextBtn" onclick="navigateChapter(1)">
-            <div class="nav-btn-inner" style="text-align:right">
-                <span class="nav-label">Next</span>
-                <span class="nav-title" id="nextTitle">—</span>
-            </div>
-            <i class="fas fa-chevron-right"></i>
-        </button>
-    </div>
-
     <div class="comments-section">
         <h4><i class="fas fa-comments"></i> Comments</h4>
         <div id="commentFormArea"></div>
-        <div class="comments-list" id="commentsList">
-            <div class="comments-loading">Loading comments...</div>
-        </div>
+        <div class="comments-list" id="commentsList"><div class="comments-loading">Loading comments...</div></div>
     </div>
-
 </div>
 
 <div class="error-screen" id="errorScreen">
-    <i class="fas fa-book"></i>
-    <h2>Chapter not found</h2>
+    <i class="fas fa-book"></i><h2>Chapter not found</h2>
     <p>This chapter doesn't exist or may have been removed.</p>
     <a href="index.html"><i class="fas fa-arrow-left"></i> Back to Archive</a>
 </div>
@@ -347,26 +194,18 @@
         messagingSenderId: "56870938100",
         appId: "1:56870938100:web:28aa9c471f24e3f9ee05a1"
     };
-
     firebase.initializeApp(firebaseConfig);
-    const db       = firebase.firestore();
-    const auth     = firebase.auth();
+    const db = firebase.firestore();
+    const auth = firebase.auth();
     const provider = new firebase.auth.GoogleAuthProvider();
 
-    let currentChapter  = null;
-    let currentBook     = null;
-    let allBookChapters = [];
-    let currentIndex    = 0;
-    let fontSize        = 1.2;
-    let currentUser     = null;
-    let isBookmarked    = false;
-    let userRating      = 0;
+    let currentChapter = null, currentBook = null, allBookChapters = [], currentIndex = 0;
+    let fontSize = 1.2, currentUser = null, isBookmarked = false, userRating = 0;
 
     document.addEventListener('DOMContentLoaded', async () => {
         loadSavedTheme();
         buildThemeSwitcher('readerThemeMount');
-
-        const params    = new URLSearchParams(window.location.search);
+        const params = new URLSearchParams(window.location.search);
         const chapterId = params.get('chapter');
         if (!chapterId) { showError(); return; }
 
@@ -385,17 +224,11 @@
             const chapDoc = await db.collection('chapters').doc(chapterId).get();
             if (!chapDoc.exists) { showError(); return; }
             currentChapter = { id: chapDoc.id, ...chapDoc.data() };
-
             const bookDoc = await db.collection('books').doc(currentChapter.bookId).get();
-            currentBook   = bookDoc.exists ? { id: bookDoc.id, ...bookDoc.data() } : null;
-
-            const chapSnap = await db.collection('chapters')
-                .where('bookId', '==', currentChapter.bookId).get();
-            allBookChapters = chapSnap.docs
-                .map(d => ({ id: d.id, ...d.data() }))
-                .sort((a,b) => new Date(a.date) - new Date(b.date));
+            currentBook = bookDoc.exists ? { id: bookDoc.id, ...bookDoc.data() } : null;
+            const chapSnap = await db.collection('chapters').where('bookId', '==', currentChapter.bookId).get();
+            allBookChapters = chapSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => new Date(a.date) - new Date(b.date));
             currentIndex = allBookChapters.findIndex(c => c.id === chapterId);
-
             renderChapter(currentChapter, currentBook);
             setupProgressBar();
             setupBarAutoHide();
@@ -403,34 +236,17 @@
             loadRatings();
             loadComments();
             fadeOutLoader();
-        } catch (err) {
-            console.error(err);
-            showError();
-        }
+        } catch (err) { showError(); }
     });
 
-    // ── AUTH ──────────────────────────────────────────────
     function updateBarAuth(user) {
         const btn = document.getElementById('barAuthBtn');
         if (!btn) return;
         if (user) {
-            btn.innerHTML = user.photoURL
-                ? `<img src="${user.photoURL}" alt=""> ${user.displayName ? user.displayName.split(' ')[0] : 'Account'}`
-                : `<i class="fas fa-user-circle"></i> ${user.displayName ? user.displayName.split(' ')[0] : 'Me'}`;
-        } else {
-            btn.innerHTML = '<i class="fab fa-google"></i> Sign in';
-        }
+            btn.innerHTML = user.photoURL ? `<img src="${user.photoURL}" alt=""> ${user.displayName?.split(' ')[0] || 'User'}` : `<i class="fas fa-user-circle"></i> ${user.displayName?.split(' ')[0] || 'User'}`;
+        } else btn.innerHTML = '<i class="fab fa-google"></i> Sign in';
     }
-
-    function handleBarAuth() {
-        if (currentUser) {
-            if (confirm('Sign out?')) auth.signOut();
-        } else {
-            auth.signInWithPopup(provider).catch(() => showToast('Sign in failed. Try again.'));
-        }
-    }
-
-    // ── BOOKMARK ──────────────────────────────────────────
+    function handleBarAuth() { currentUser ? auth.signOut() : auth.signInWithPopup(provider).catch(() => showToast('Sign in failed')); }
     async function loadUserData() {
         if (!currentUser || !currentChapter) return;
         try {
@@ -439,267 +255,130 @@
             const rDoc = await db.collection('ratings').doc(`${currentUser.uid}_${currentChapter.bookId}`).get();
             userRating = rDoc.exists ? rDoc.data().rating : 0;
             renderStars(userRating);
-        } catch (err) { console.error(err); }
+        } catch(err){}
     }
-
     function updateBookmarkBtn() {
-        const btn  = document.getElementById('bookmarkBtn');
-        if (!btn) return;
+        const btn = document.getElementById('bookmarkBtn');
+        if(!btn) return;
         const icon = btn.querySelector('i');
-        if (isBookmarked) { icon.className = 'fas fa-bookmark'; btn.classList.add('active'); }
-        else              { icon.className = 'far fa-bookmark'; btn.classList.remove('active'); }
+        if(isBookmarked) { icon.className = 'fas fa-bookmark'; btn.classList.add('active'); }
+        else { icon.className = 'far fa-bookmark'; btn.classList.remove('active'); }
     }
-
     async function toggleBookmark() {
-        if (!currentUser) { showToast('Sign in to bookmark'); return; }
+        if(!currentUser){ showToast('Sign in to bookmark'); return; }
         const ref = db.collection('bookmarks').doc(`${currentUser.uid}_${currentChapter.bookId}`);
-        try {
-            if (isBookmarked) {
-                await ref.delete(); isBookmarked = false; showToast('Bookmark removed');
-            } else {
-                await ref.set({ userId: currentUser.uid, bookId: currentChapter.bookId, chapterId: currentChapter.id, bookTitle: currentBook ? currentBook.title : '', savedAt: new Date().toISOString() });
-                isBookmarked = true; showToast('Bookmarked!');
-            }
-            updateBookmarkBtn();
-        } catch (err) { showToast('Error saving bookmark'); }
+        if(isBookmarked) { await ref.delete(); isBookmarked=false; showToast('Bookmark removed'); }
+        else { await ref.set({ userId: currentUser.uid, bookId: currentChapter.bookId, chapterId: currentChapter.id, bookTitle: currentBook?.title, savedAt: new Date().toISOString() }); isBookmarked=true; showToast('Bookmarked!'); }
+        updateBookmarkBtn();
     }
-
-    // ── RATINGS ───────────────────────────────────────────
     function setupStars() {
         document.querySelectorAll('.star').forEach(star => {
             star.addEventListener('mouseover', () => hoverStars(parseInt(star.dataset.value)));
-            star.addEventListener('mouseout',  () => renderStars(userRating));
-            star.addEventListener('click',     () => submitRating(parseInt(star.dataset.value)));
+            star.addEventListener('mouseout', () => renderStars(userRating));
+            star.addEventListener('click', () => submitRating(parseInt(star.dataset.value)));
         });
     }
-
-    function hoverStars(value) {
-        document.querySelectorAll('.star').forEach(s => {
-            s.className = parseInt(s.dataset.value) <= value ? 'fas fa-star star filled' : 'far fa-star star';
-        });
-    }
-
-    function renderStars(value) {
-        document.querySelectorAll('.star').forEach(s => {
-            s.className = parseInt(s.dataset.value) <= value ? 'fas fa-star star filled' : 'far fa-star star';
-        });
-    }
-
+    function hoverStars(v){ document.querySelectorAll('.star').forEach(s=>{ s.className = parseInt(s.dataset.value) <= v ? 'fas fa-star star filled' : 'far fa-star star'; }); }
+    function renderStars(v){ document.querySelectorAll('.star').forEach(s=>{ s.className = parseInt(s.dataset.value) <= v ? 'fas fa-star star filled' : 'far fa-star star'; }); }
     async function loadRatings() {
-        if (!currentBook) return;
-        try {
-            const snap = await db.collection('ratings').where('bookId', '==', currentBook.id).get();
-            const info = document.getElementById('ratingInfo');
-            if (snap.empty) { info.innerHTML = 'No ratings yet — be the first!'; return; }
-            const ratings = snap.docs.map(d => d.data().rating);
-            const avg     = (ratings.reduce((a,b) => a+b,0) / ratings.length).toFixed(1);
-            info.innerHTML = `<span>${avg} / 5</span> &nbsp;·&nbsp; ${ratings.length} rating${ratings.length !== 1 ? 's' : ''}`;
-            if (currentUser && userRating > 0) info.innerHTML += ` &nbsp;·&nbsp; Your rating: <span>${userRating}</span>`;
-        } catch (err) { console.error(err); }
+        if(!currentBook) return;
+        const snap = await db.collection('ratings').where('bookId','==',currentBook.id).get();
+        const info = document.getElementById('ratingInfo');
+        if(snap.empty){ info.innerHTML='No ratings yet — be the first!'; return; }
+        const ratings = snap.docs.map(d=>d.data().rating);
+        const avg = (ratings.reduce((a,b)=>a+b,0)/ratings.length).toFixed(1);
+        info.innerHTML = `<span>${avg} / 5</span> &nbsp;·&nbsp; ${ratings.length} rating${ratings.length!==1?'s':''}`;
+        if(currentUser && userRating>0) info.innerHTML += ` &nbsp;·&nbsp; Your rating: <span>${userRating}</span>`;
     }
-
-    async function submitRating(value) {
-        if (!currentUser) { showToast('Sign in to rate this book'); renderStars(userRating); return; }
-        if (!currentBook) return;
-        try {
-            await db.collection('ratings').doc(`${currentUser.uid}_${currentBook.id}`).set({
-                userId: currentUser.uid, bookId: currentBook.id, rating: value, ratedAt: new Date().toISOString()
-            });
-            userRating = value; renderStars(userRating);
-            showToast(`Rated ${value} star${value !== 1 ? 's' : ''}!`);
-            loadRatings();
-        } catch (err) { showToast('Error saving rating'); }
+    async function submitRating(v){
+        if(!currentUser){ showToast('Sign in to rate'); renderStars(userRating); return; }
+        await db.collection('ratings').doc(`${currentUser.uid}_${currentBook.id}`).set({ userId:currentUser.uid, bookId:currentBook.id, rating:v, ratedAt:new Date().toISOString() });
+        userRating=v; renderStars(v); showToast(`Rated ${v} star${v!==1?'s':''}!`); loadRatings();
     }
-
-    // ── COMMENTS ──────────────────────────────────────────
-    function updateCommentForm() {
+    function updateCommentForm(){
         const area = document.getElementById('commentFormArea');
-        if (!area) return;
-        if (currentUser) {
-            area.innerHTML = `
-                <div class="comment-form">
-                    <textarea id="commentInput" placeholder="Share your thoughts on this chapter..."></textarea>
-                    <div class="comment-form-footer">
-                        <div class="comment-user-info">
-                            ${currentUser.photoURL ? `<img src="${escHtml(currentUser.photoURL)}" alt="">` : '<i class="fas fa-user-circle"></i>'}
-                            ${escHtml(currentUser.displayName || 'Anonymous')}
-                        </div>
-                        <button class="submit-comment-btn" onclick="submitComment()">
-                            <i class="fas fa-paper-plane"></i> Post
-                        </button>
-                    </div>
-                </div>`;
-        } else {
-            area.innerHTML = `
-                <div class="comment-login-prompt">
-                    <p>Sign in to leave a comment</p>
-                    <button onclick="handleBarAuth()"><i class="fab fa-google"></i> Sign in with Google</button>
-                </div>`;
-        }
+        if(!area) return;
+        if(currentUser){
+            area.innerHTML=`<div class="comment-form"><textarea id="commentInput" placeholder="Share your thoughts..."></textarea><div class="comment-form-footer"><div class="comment-user-info">${currentUser.photoURL?`<img src="${escapeHtml(currentUser.photoURL)}">`:'<i class="fas fa-user-circle"></i>'}${escapeHtml(currentUser.displayName||'Anonymous')}</div><button class="submit-comment-btn" onclick="submitComment()">Post</button></div></div>`;
+        } else area.innerHTML=`<div class="comment-login-prompt"><p>Sign in to leave a comment</p><button onclick="handleBarAuth()"><i class="fab fa-google"></i> Sign in</button></div>`;
     }
-
-    async function loadComments() {
-        if (!currentChapter) return;
+    async function loadComments(){
+        if(!currentChapter) return;
         const list = document.getElementById('commentsList');
-        list.innerHTML = '<div class="comments-loading">Loading comments...</div>';
-        try {
-            const snap = await db.collection('comments').where('chapterId', '==', currentChapter.id).get();
-            const comments = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-                .sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-            if (comments.length === 0) { list.innerHTML = '<div class="comments-empty">No comments yet — be the first!</div>'; return; }
-
-            list.innerHTML = '';
-            comments.forEach(comment => {
-                const item    = document.createElement('div');
-                item.className = 'comment-item';
-                item.id        = `comment-${comment.id}`;
-                const isOwn   = currentUser && currentUser.uid === comment.userId;
-                const date    = comment.createdAt ? new Date(comment.createdAt).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) : '';
-                item.innerHTML = `
-                    <div class="comment-header">
-                        <div class="comment-author">
-                            ${comment.userPhoto ? `<img src="${escHtml(comment.userPhoto)}" alt="">` : '<i class="fas fa-user-circle" style="font-size:1.5rem;color:var(--text-dim)"></i>'}
-                            <div class="comment-author-info">
-                                <span class="comment-name">${escHtml(comment.userName || 'Anonymous')}</span>
-                                <span class="comment-date">${date}</span>
-                            </div>
-                        </div>
-                        ${isOwn ? `<button class="comment-delete-btn" onclick="deleteComment('${comment.id}')" title="Delete"><i class="fas fa-trash"></i></button>` : ''}
-                    </div>
-                    <div class="comment-text">${escHtml(comment.text)}</div>`;
-                list.appendChild(item);
-            });
-        } catch (err) {
-            list.innerHTML = '<div class="comments-empty">Could not load comments.</div>';
-        }
+        list.innerHTML='<div class="comments-loading">Loading comments...</div>';
+        const snap = await db.collection('comments').where('chapterId','==',currentChapter.id).get();
+        const comments = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+        if(comments.length===0){ list.innerHTML='<div class="comments-empty">No comments yet — be the first!</div>'; return; }
+        list.innerHTML='';
+        comments.forEach(c=>{
+            const div=document.createElement('div'); div.className='comment-item';
+            const isOwn = currentUser && currentUser.uid===c.userId;
+            div.innerHTML=`<div class="comment-header"><div class="comment-author">${c.userPhoto?`<img src="${escapeHtml(c.userPhoto)}">`:'<i class="fas fa-user-circle" style="font-size:1.5rem"></i>'}<div><div class="comment-name">${escapeHtml(c.userName||'Anonymous')}</div><div class="comment-date">${new Date(c.createdAt).toLocaleDateString()}</div></div></div>${isOwn?`<button class="comment-delete-btn" onclick="deleteComment('${c.id}')"><i class="fas fa-trash"></i></button>`:''}</div><div class="comment-text">${escapeHtml(c.text)}</div>`;
+            list.appendChild(div);
+        });
     }
-
-    async function submitComment() {
-        if (!currentUser) { showToast('Sign in to comment'); return; }
-        const input = document.getElementById('commentInput');
-        const text  = input?.value.trim();
-        if (!text) { showToast('Write something first!'); return; }
-        const btn = document.querySelector('.submit-comment-btn');
-        if (btn) btn.disabled = true;
-        try {
-            await db.collection('comments').add({
-                chapterId: currentChapter.id, bookId: currentChapter.bookId,
-                userId: currentUser.uid, userName: currentUser.displayName || 'Anonymous',
-                userPhoto: currentUser.photoURL || '', text,
-                createdAt: new Date().toISOString()
-            });
-            if (input) input.value = '';
-            showToast('Comment posted!');
-            loadComments();
-        } catch (err) { showToast('Error posting comment'); }
-        finally { if (btn) btn.disabled = false; }
-    }
-
-    async function deleteComment(commentId) {
-        if (!confirm('Delete this comment?')) return;
-        try {
-            await db.collection('comments').doc(commentId).delete();
-            showToast('Comment deleted');
-            loadComments();
-        } catch (err) { showToast('Error deleting comment'); }
-    }
-
-    // ── RENDER ────────────────────────────────────────────
-    function renderChapter(chapter, book) {
-        document.title = `${chapter.title} — Lusales Archive`;
-        document.getElementById('barTitle').innerHTML = `<span>${book ? escHtml(book.title) : ''}</span> &nbsp;·&nbsp; ${escHtml(chapter.title)}`;
-        document.getElementById('bookLabel').textContent = book ? `— ${book.title} —` : '— Lusales Archive —';
-        document.getElementById('chapterTitle').textContent = chapter.title;
-        document.getElementById('chapterMeta').textContent  = formatDate(chapter.date);
-
-        const body = document.getElementById('chapterBody');
-        const paragraphs = chapter.content.split('\n').filter(p => p.trim()).map(p => `<p>${escHtml(p)}</p>`).join('');
-        body.innerHTML = paragraphs || `<p>${escHtml(chapter.content)}</p>`;
-        body.style.fontSize = `${fontSize}rem`;
-
+    window.submitComment=async function(){
+        if(!currentUser){ showToast('Sign in to comment'); return; }
+        const input=document.getElementById('commentInput');
+        const text=input?.value.trim();
+        if(!text){ showToast('Write something'); return; }
+        const btn=document.querySelector('.submit-comment-btn'); if(btn) btn.disabled=true;
+        await db.collection('comments').add({ chapterId:currentChapter.id, bookId:currentChapter.bookId, userId:currentUser.uid, userName:currentUser.displayName||'Anonymous', userPhoto:currentUser.photoURL||'', text, createdAt:new Date().toISOString() });
+        if(input) input.value='';
+        showToast('Comment posted!'); loadComments();
+        if(btn) btn.disabled=false;
+    };
+    window.deleteComment=async function(id){
+        if(!confirm('Delete?')) return;
+        await db.collection('comments').doc(id).delete();
+        showToast('Deleted'); loadComments();
+    };
+    function renderChapter(chapter,book){
+        document.title=`${chapter.title} — Lusales Archive`;
+        document.getElementById('barTitle').innerHTML=`<span>${book?escapeHtml(book.title):''}</span> &nbsp;·&nbsp; ${escapeHtml(chapter.title)}`;
+        document.getElementById('bookLabel').textContent=book?`— ${book.title} —`:'— Lusales Archive —';
+        document.getElementById('chapterTitle').textContent=chapter.title;
+        document.getElementById('chapterMeta').textContent=formatDate(chapter.date);
+        const body=document.getElementById('chapterBody');
+        const paragraphs=chapter.content.split('\n').filter(p=>p.trim()).map(p=>`<p>${escapeHtml(p)}</p>`).join('');
+        body.innerHTML=paragraphs||`<p>${escapeHtml(chapter.content)}</p>`;
+        body.style.fontSize=`${fontSize}rem`;
         updateNavButtons();
-        document.getElementById('readerPage').style.display = 'block';
-        window.scrollTo(0, 0);
+        document.getElementById('readerPage').style.display='block';
+        window.scrollTo(0,0);
     }
-
-    function updateNavButtons() {
-        const prevBtn = document.getElementById('prevBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        if (currentIndex > 0) { prevBtn.classList.remove('disabled'); document.getElementById('prevTitle').textContent = allBookChapters[currentIndex-1].title; }
-        else                  { prevBtn.classList.add('disabled');    document.getElementById('prevTitle').textContent = '—'; }
-        if (currentIndex < allBookChapters.length-1) { nextBtn.classList.remove('disabled'); document.getElementById('nextTitle').textContent = allBookChapters[currentIndex+1].title; }
-        else                                          { nextBtn.classList.add('disabled');    document.getElementById('nextTitle').textContent = '—'; }
+    function updateNavButtons(){
+        const prevBtn=document.getElementById('prevBtn'), nextBtn=document.getElementById('nextBtn');
+        if(currentIndex>0){ prevBtn.classList.remove('disabled'); document.getElementById('prevTitle').textContent=allBookChapters[currentIndex-1].title; }
+        else { prevBtn.classList.add('disabled'); document.getElementById('prevTitle').textContent='—'; }
+        if(currentIndex<allBookChapters.length-1){ nextBtn.classList.remove('disabled'); document.getElementById('nextTitle').textContent=allBookChapters[currentIndex+1].title; }
+        else { nextBtn.classList.add('disabled'); document.getElementById('nextTitle').textContent='—'; }
     }
-
-    function navigateChapter(direction) {
-        const newIndex = currentIndex + direction;
-        if (newIndex < 0 || newIndex >= allBookChapters.length) return;
-        window.location.href = `reader.html?chapter=${allBookChapters[newIndex].id}`;
+    window.navigateChapter=function(direction){
+        const newIndex=currentIndex+direction;
+        if(newIndex<0||newIndex>=allBookChapters.length) return;
+        window.location.href=`reader.html?chapter=${allBookChapters[newIndex].id}`;
+    };
+    window.goBack=function(){
+        if(document.referrer && document.referrer.includes(window.location.hostname)) history.back();
+        else window.location.href='index.html';
+    };
+    function changeFontSize(d){ fontSize=Math.min(Math.max(fontSize+d*0.1,0.9),1.8); const body=document.getElementById('chapterBody'); if(body) body.style.fontSize=`${fontSize}rem`; }
+    function setupProgressBar(){
+        const bar=document.getElementById('progressBar');
+        window.addEventListener('scroll',()=>{ const docH=document.documentElement.scrollHeight-window.innerHeight; bar.style.width=docH>0?`${(window.scrollY/docH)*100}%`:'0%'; });
     }
-
-    function goBack() {
-        if (document.referrer && document.referrer.includes(window.location.hostname)) history.back();
-        else window.location.href = 'index.html';
+    function setupBarAutoHide(){
+        const bar=document.getElementById('readerBar');
+        let last=0;
+        window.addEventListener('scroll',()=>{ const cur=window.scrollY; if(cur>last && cur>150) bar.classList.add('hidden'); else bar.classList.remove('hidden'); last=cur; });
     }
-
-    function changeFontSize(d) {
-        fontSize = Math.min(Math.max(fontSize + d * 0.1, 0.9), 1.8);
-        const body = document.getElementById('chapterBody');
-        if (body) body.style.fontSize = `${fontSize}rem`;
-    }
-
-    function setupProgressBar() {
-        const bar = document.getElementById('progressBar');
-        window.addEventListener('scroll', () => {
-            const docH = document.documentElement.scrollHeight - window.innerHeight;
-            bar.style.width = docH > 0 ? `${(window.scrollY / docH) * 100}%` : '0%';
-        });
-    }
-
-    function setupBarAutoHide() {
-        const bar = document.getElementById('readerBar');
-        let last = 0;
-        window.addEventListener('scroll', () => {
-            const cur = window.scrollY;
-            if (cur > last && cur > 150) bar.classList.add('hidden');
-            else bar.classList.remove('hidden');
-            last = cur;
-        });
-    }
-
-    function showToast(msg) {
-        const t = document.getElementById('toast');
-        t.textContent = msg; t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 2500);
-    }
-
-    function fadeOutLoader() {
-        const l = document.getElementById('loadingScreen');
-        l.classList.add('fade-out');
-        setTimeout(() => l.style.display = 'none', 500);
-    }
-
-    function showError() {
-        document.getElementById('loadingScreen').style.display = 'none';
-        document.getElementById('errorScreen').style.display   = 'block';
-    }
-
-    document.addEventListener('keydown', e => {
-        if (e.key === 'ArrowRight') navigateChapter(1);
-        if (e.key === 'ArrowLeft')  navigateChapter(-1);
-        if (e.key === 'Escape')     goBack();
-    });
-
-    function escHtml(str) {
-        if (!str) return '';
-        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-
-    function formatDate(dateStr) {
-        if (!dateStr) return '';
-        return new Date(dateStr).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
-    }
+    function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+    function fadeOutLoader(){ const l=document.getElementById('loadingScreen'); l.classList.add('fade-out'); setTimeout(()=>l.style.display='none',500); }
+    function showError(){ document.getElementById('loadingScreen').style.display='none'; document.getElementById('errorScreen').style.display='block'; }
+    document.addEventListener('keydown',e=>{ if(e.key==='ArrowRight') navigateChapter(1); if(e.key==='ArrowLeft') navigateChapter(-1); if(e.key==='Escape') goBack(); });
+    function escapeHtml(str){ if(!str) return ''; return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function formatDate(dateStr){ return dateStr ? new Date(dateStr).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) : ''; }
 </script>
 </body>
 </html>
