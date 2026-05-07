@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Lusales Archive</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>(function(){ const saved=localStorage.getItem('lusales_theme')||'black'; document.documentElement.setAttribute('data-theme',saved); })();</script>
+</head>
+<body>
+<nav class="navbar">
+    <div class="container">
+        <div class="logo"><h1 onclick="window.location.href='index.html'"><i class="fas fa-book"></i> lusaleArchive</h1></div>
+        <div class="nav-links" id="navLinks">
+            <a href="index.html">Home</a><a href="library.html">Library</a><a href="index.html#recent">Recent</a>
+            <div class="search-box"><input type="text" id="searchInput" placeholder="Search books..."><button id="searchBtn"><i class="fas fa-search"></i></button></div>
+            <div id="themeSwitcherMount"></div>
+            <div class="user-menu" id="userMenu"><button class="auth-btn" id="authBtn"><i class="fab fa-google"></i> Sign in</button><div class="user-dropdown" id="userDropdown"><a href="dashboard.html" id="dashboardLink" style="display:none"><i class="fas fa-tachometer-alt"></i> Dashboard</a><button class="signout-btn" id="signoutBtn"><i class="fas fa-sign-out-alt"></i> Sign out</button></div></div>
+        </div>
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+    </div>
+</nav>
+<main class="container">
+    <h2 style="margin:2rem 0 0.5rem"><i class="fas fa-tachometer-alt"></i> Your Dashboard</h2>
+    <div id="userInfo" style="margin-bottom:2rem;"></div>
+    <div class="section-header"><h3><i class="fas fa-bookmark"></i> Saved Books (Your Library)</h3></div>
+    <div class="books-grid" id="savedBooksGrid"></div>
+</main>
+<footer><div class="container"><p>&copy; 2025 Lusales Archive</p><div class="footer-links"><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Contact</a></div></div></footer>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+<script src="theme.js"></script>
+<script>
+    const firebaseConfig = { apiKey:"AIzaSyBnsU904MyOFhK3zLJB02U39e9f2UnGWio", authDomain:"lusales-archive.firebaseapp.com", projectId:"lusales-archive", storageBucket:"lusales-archive.firebasestorage.app", messagingSenderId:"56870938100", appId:"1:56870938100:web:28aa9c471f24e3f9ee05a1" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+    let currentUser = null;
+
+    auth.onAuthStateChanged(async user => {
+        currentUser = user;
+        updateAuthUI(user);
+        updateDashboardLink();
+        if(!user){
+            document.getElementById('savedBooksGrid').innerHTML='<div class="empty-state"><i class="fas fa-sign-in-alt"></i><p>Please sign in to view your dashboard.</p></div>';
+            document.getElementById('userInfo').innerHTML='<p>Not signed in.</p>';
+            return;
+        }
+        document.getElementById('userInfo').innerHTML=`<div style="display:flex; align-items:center; gap:1rem">${user.photoURL?`<img src="${user.photoURL}" style="width:48px; border-radius:50%">`:''}<div><strong>${escapeHtml(user.displayName||user.email)}</strong><br><span style="color:var(--text-muted)">${escapeHtml(user.email)}</span></div></div>`;
+        await loadSavedBooks();
+    });
+
+    async function loadSavedBooks(){
+        const snap = await db.collection('bookmarks').where('userId','==',currentUser.uid).get();
+        const bookmarks = snap.docs.map(d=>({id:d.id,...d.data()}));
+        const grid = document.getElementById('savedBooksGrid');
+        if(!bookmarks.length){
+            grid.innerHTML='<div class="empty-state"><i class="fas fa-book-open"></i><p>No saved books. Browse the <a href="library.html">Library</a> and bookmark some!</p></div>';
+            return;
+        }
+        const bookIds = bookmarks.map(b=>b.bookId);
+        const booksSnap = await db.collection('books').where(firebase.firestore.FieldPath.documentId(), 'in', bookIds).get();
+        const books = booksSnap.docs.map(d=>({id:d.id,...d.data()}));
+        grid.innerHTML='';
+        for(let book of books){
+            const card = document.createElement('div');
+            card.className = 'book-card';
+            card.innerHTML = `<div class="book-cover" style="background:${book.coverColor||'#333'}"><i class="fas fa-book"></i></div><div class="book-info"><h3>${escapeHtml(book.title)}</h3><p class="author">${escapeHtml(book.author)}</p><button class="remove-bookmark" data-bookid="${book.id}" style="margin-top:0.5rem;background:none;border:1px solid var(--border);padding:0.2rem 0.6rem;cursor:pointer;border-radius:4px;color:var(--text-muted)"><i class="fas fa-trash"></i> Remove</button></div>`;
+            card.querySelector('.book-cover').addEventListener('click', (e) => { e.stopPropagation(); window.location.href=`reader.html?chapter=${bookmarks.find(b=>b.bookId===book.id)?.chapterId||''}`; });
+            grid.appendChild(card);
+        }
+        document.querySelectorAll('.remove-bookmark').forEach(btn=>{
+            btn.addEventListener('click', async (e)=>{
+                e.stopPropagation();
+                const bookId = btn.dataset.bookid;
+                const bookmarkDoc = await db.collection('bookmarks').where('userId','==',currentUser.uid).where('bookId','==',bookId).get();
+                bookmarkDoc.forEach(d=>d.ref.delete());
+                btn.closest('.book-card').remove();
+                if(grid.children.length===0) grid.innerHTML='<div class="empty-state">Your library is empty now.</div>';
+                else showToast('Removed from your library');
+            });
+        });
+    }
+
+    function showToast(msg){ const t=document.getElementById('toast')|| (()=>{const d=document.createElement('div'); d.id='toast'; d.className='toast'; document.body.appendChild(d); return d;})(); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+    function updateAuthUI(user){ const btn=document.getElementById('authBtn'); if(!btn) return; if(user){ btn.innerHTML=user.photoURL?`<img src="${user.photoURL}"> ${user.displayName?.split(' ')[0]||'User'}`:`<i class="fas fa-user-circle"></i> ${user.displayName?.split(' ')[0]||'User'}`; } else btn.innerHTML='<i class="fab fa-google"></i> Sign in'; }
+    function updateDashboardLink(){ const link=document.getElementById('dashboardLink'); if(link) link.style.display=currentUser?'flex':'none'; }
+    window.handleAuthClick=function(){ if(currentUser) document.getElementById('userMenu')?.classList.toggle('open'); else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(()=>alert('Sign in failed')); };
+    window.signOut=function(){ auth.signOut().then(()=>window.location.href='index.html'); };
+    function escapeHtml(str){ if(!str) return ''; return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    // search redirect
+    document.getElementById('searchBtn')?.addEventListener('click',()=>{ const q=document.getElementById('searchInput')?.value.trim(); if(q) window.location.href=`library.html?search=${encodeURIComponent(q)}`; else window.location.href='library.html'; });
+    document.getElementById('searchInput')?.addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('searchBtn').click(); });
+    // hamburger
+    const mb=document.getElementById('mobileMenuBtn'), nl=document.getElementById('navLinks');
+    if(mb) mb.onclick=()=>nl.classList.toggle('open');
+    document.addEventListener('DOMContentLoaded',()=>{ loadSavedTheme(); buildThemeSwitcher('themeSwitcherMount'); });
+</script>
+</body>
+</html>
