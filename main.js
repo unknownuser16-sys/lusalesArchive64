@@ -1,5 +1,5 @@
 // ============================================================
-// LUSALES ARCHIVE — MAIN SITE SCRIPT
+// LUSALES ARCHIVE — MAIN SITE SCRIPT (UPDATED)
 // ============================================================
 
 const firebaseConfig = {
@@ -12,249 +12,124 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-const db       = firebase.firestore();
-const auth     = firebase.auth();
+const db = firebase.firestore();
+const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
 
-let books       = [];
-let chapters    = [];
+let books = [];
+let chapters = [];
 let currentUser = null;
 
-// ── INIT ─────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-    // Theme
     loadSavedTheme();
     buildThemeSwitcher('themeSwitcherMount');
 
-    // Auth
     auth.onAuthStateChanged(user => {
         currentUser = user;
         updateAuthUI(user);
+        updateDashboardLink();
     });
 
-    // Data
     await loadData();
-    renderFeaturedBooks();
     renderRecentChapters();
-    updateStats();
-    setupSearch();
+    setupSearchRedirect();
 });
 
-// ============================================================
-// DATA
-// ============================================================
 async function loadData() {
     try {
         const [booksSnap, chaptersSnap] = await Promise.all([
             db.collection('books').get(),
             db.collection('chapters').get()
         ]);
-        books    = booksSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-        chapters = chaptersSnap.docs
-            .map(d => ({ id: d.id, ...d.data() }))
+        books = booksSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        chapters = chaptersSnap.docs.map(d => ({ id: d.id, ...d.data() }))
             .sort((a, b) => new Date(b.date) - new Date(a.date));
     } catch (err) {
-        console.error('Failed to load data:', err);
+        console.error("Failed to load data:", err);
     }
 }
 
-// ============================================================
-// STATS BAR
-// ============================================================
-function updateStats() {
-    const statBooks    = document.getElementById('statBooks');
-    const statChapters = document.getElementById('statChapters');
-    const statUpdated  = document.getElementById('statUpdated');
-
-    if (statBooks)    statBooks.textContent    = books.length;
-    if (statChapters) statChapters.textContent = chapters.length;
-
-    if (statUpdated && chapters.length > 0) {
-        const latest = chapters[0].date;
-        statUpdated.textContent = latest
-            ? new Date(latest).toLocaleDateString('en-GB', { day:'numeric', month:'short' })
-            : '—';
+function renderRecentChapters() {
+    const list = document.getElementById('recentChapters');
+    if (!list) return;
+    if (!chapters.length) {
+        list.innerHTML = '<div class="empty-state"><i class="fas fa-scroll"></i><p>No chapters yet — come back soon.</p></div>';
+        return;
     }
+    list.innerHTML = '';
+    chapters.slice(0, 10).forEach(ch => {
+        const book = books.find(b => b.id === ch.bookId);
+        const entry = document.createElement('div');
+        entry.className = 'chapter-entry';
+        entry.onclick = () => window.location.href = `reader.html?chapter=${ch.id}`;
+        entry.innerHTML = `
+            <div class="chapter-entry-info">
+                <h4>${escapeHtml(ch.title)}</h4>
+                <span class="book-name">${book ? escapeHtml(book.title) : 'Unknown Book'}</span>
+            </div>
+            <div class="chapter-entry-meta">${formatDate(ch.date)}</div>
+        `;
+        list.appendChild(entry);
+    });
 }
 
-// ============================================================
-// AUTH
-// ============================================================
+function setupSearchRedirect() {
+    const input = document.getElementById('searchInput');
+    const btn = document.getElementById('searchBtn');
+    const doSearch = () => {
+        const q = input.value.trim();
+        if (q) window.location.href = `library.html?search=${encodeURIComponent(q)}`;
+        else window.location.href = 'library.html';
+    };
+    if (btn) btn.onclick = doSearch;
+    if (input) input.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+}
+
+// Auth UI
 function updateAuthUI(user) {
-    const authBtn      = document.getElementById('authBtn');
-    const userDropdown = document.getElementById('userDropdown');
+    const authBtn = document.getElementById('authBtn');
     if (!authBtn) return;
-
     if (user) {
         authBtn.innerHTML = user.photoURL
-            ? `<img src="${user.photoURL}" alt=""> ${user.displayName ? user.displayName.split(' ')[0] : 'Account'}`
-            : `<i class="fas fa-user-circle"></i> ${user.displayName ? user.displayName.split(' ')[0] : 'Account'}`;
+            ? `<img src="${user.photoURL}" alt=""> ${user.displayName?.split(' ')[0] || 'User'}`
+            : `<i class="fas fa-user-circle"></i> ${user.displayName?.split(' ')[0] || 'User'}`;
     } else {
         authBtn.innerHTML = '<i class="fab fa-google"></i> Sign in';
-        if (userDropdown) {
-            const bl = userDropdown.querySelector('.bookmarks-link');
-            if (bl) bl.remove();
-        }
     }
 }
 
-function handleAuthClick() {
+function updateDashboardLink() {
+    const link = document.getElementById('dashboardLink');
+    if (link) link.style.display = currentUser ? 'flex' : 'none';
+}
+
+// Expose globally for onclick
+window.handleAuthClick = function() {
     if (currentUser) {
         document.getElementById('userMenu')?.classList.toggle('open');
     } else {
         auth.signInWithPopup(provider).catch(() => alert('Sign in failed. Please try again.'));
     }
-}
+};
 
-function signOut() {
+window.signOut = function() {
     auth.signOut().then(() => {
         document.getElementById('userMenu')?.classList.remove('open');
+        window.location.href = 'index.html';
     });
-}
+};
 
 document.addEventListener('click', e => {
     const menu = document.getElementById('userMenu');
     if (menu && !menu.contains(e.target)) menu.classList.remove('open');
 });
 
-// ============================================================
-// BOOKS
-// ============================================================
-function renderFeaturedBooks() {
-    const grid = document.getElementById('featuredBooks');
-    if (!grid) return;
-
-    if (books.length === 0) {
-        grid.innerHTML = `<div class="empty-state"><i class="fas fa-book-open"></i><p>No books yet — check back soon.</p></div>`;
-        return;
-    }
-
-    grid.innerHTML = '';
-    books.forEach(book => {
-        const bookChapters = chapters.filter(c => c.bookId === book.id);
-        const firstChapter = [...bookChapters].sort((a,b) => new Date(a.date)-new Date(b.date))[0];
-
-        const card = document.createElement('div');
-        card.className = 'book-card';
-        card.onclick = () => {
-            if (firstChapter) window.location.href = `reader.html?chapter=${firstChapter.id}`;
-            else alert('This book has no chapters yet.');
-        };
-        card.innerHTML = `
-            <div class="book-cover" style="background:${book.coverColor || randomCover()}">
-                <i class="fas fa-book" style="position:relative;z-index:1;color:rgba(255,255,255,0.2)"></i>
-            </div>
-            <div class="book-info">
-                <h3>${escHtml(book.title)}</h3>
-                <p class="author">by ${escHtml(book.author)}</p>
-                <span class="chapter-count">${bookChapters.length} chapter${bookChapters.length !== 1 ? 's' : ''}</span>
-            </div>`;
-        grid.appendChild(card);
-    });
-}
-
-// ============================================================
-// RECENT CHAPTERS
-// ============================================================
-function renderRecentChapters() {
-    const list = document.getElementById('recentChapters');
-    if (!list) return;
-
-    if (chapters.length === 0) {
-        list.innerHTML = `<div class="empty-state"><i class="fas fa-scroll"></i><p>No chapters yet — come back soon.</p></div>`;
-        return;
-    }
-
-    list.innerHTML = '';
-    chapters.slice(0, 10).forEach(chapter => {
-        const book = books.find(b => b.id === chapter.bookId);
-        const entry = document.createElement('div');
-        entry.className = 'chapter-entry';
-        entry.onclick = () => window.location.href = `reader.html?chapter=${chapter.id}`;
-        entry.innerHTML = `
-            <div class="chapter-entry-info">
-                <h4>${escHtml(chapter.title)}</h4>
-                <span class="book-name">${book ? escHtml(book.title) : 'Unknown Book'}</span>
-            </div>
-            <div class="chapter-entry-meta">${formatDate(chapter.date)}</div>`;
-        list.appendChild(entry);
-    });
-}
-
-// ============================================================
-// SEARCH
-// ============================================================
-function setupSearch() {
-    const input = document.getElementById('searchInput');
-    const btn   = document.getElementById('searchBtn');
-
-    function doSearch() {
-        const q = input?.value.trim().toLowerCase();
-        if (!q) { renderFeaturedBooks(); return; }
-
-        const results = books.filter(b =>
-            b.title.toLowerCase().includes(q) ||
-            b.author.toLowerCase().includes(q) ||
-            (b.description && b.description.toLowerCase().includes(q))
-        );
-
-        const grid = document.getElementById('featuredBooks');
-        if (!grid) return;
-
-        if (results.length === 0) {
-            grid.innerHTML = `<div class="empty-state"><i class="fas fa-search"></i><p>No books found for "<strong>${escHtml(q)}</strong>"</p></div>`;
-            return;
-        }
-
-        grid.innerHTML = '';
-        results.forEach(book => {
-            const bookChapters = chapters.filter(c => c.bookId === book.id);
-            const firstChapter = [...bookChapters].sort((a,b) => new Date(a.date)-new Date(b.date))[0];
-            const card = document.createElement('div');
-            card.className = 'book-card';
-            card.onclick = () => {
-                if (firstChapter) window.location.href = `reader.html?chapter=${firstChapter.id}`;
-                else alert('This book has no chapters yet.');
-            };
-            card.innerHTML = `
-                <div class="book-cover" style="background:${book.coverColor || randomCover()}">
-                    <i class="fas fa-book" style="position:relative;z-index:1;color:rgba(255,255,255,0.2)"></i>
-                </div>
-                <div class="book-info">
-                    <h3>${escHtml(book.title)}</h3>
-                    <p class="author">by ${escHtml(book.author)}</p>
-                    <span class="chapter-count">${bookChapters.length} chapter${bookChapters.length !== 1 ? 's' : ''}</span>
-                </div>`;
-            grid.appendChild(card);
-        });
-
-        grid.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    if (btn)   btn.onclick = doSearch;
-    if (input) input.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
-}
-
-// ============================================================
-// UTILITIES
-// ============================================================
-function randomCover() {
-    const g = [
-        'linear-gradient(135deg,#1a1a2e,#16213e)',
-        'linear-gradient(135deg,#0f3460,#533483)',
-        'linear-gradient(135deg,#2d1b69,#11998e)',
-        'linear-gradient(135deg,#373b44,#4286f4)',
-        'linear-gradient(135deg,#3d0c02,#8a1a0a)',
-    ];
-    return g[Math.floor(Math.random() * g.length)];
-}
-
-function escHtml(str) {
+function escapeHtml(str) {
     if (!str) return '';
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function formatDate(dateStr) {
     if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+    return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
