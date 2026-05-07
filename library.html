@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library — Lusales Archive</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>(function(){const t=localStorage.getItem('lusales_theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="container">
+        <div class="logo"><a href="index.html"><i class="fas fa-book"></i> lusaleArchive</a></div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="library.html" class="active">Library</a>
+            <a href="recent.html">Recent</a>
+        </div>
+        <div class="nav-right">
+            <div class="search-box">
+                <input type="text" placeholder="Search books..." id="searchInput">
+                <button onclick="doSearch()"><i class="fas fa-search"></i></button>
+            </div>
+            <div id="themeSwitcherMount"></div>
+            <div class="user-menu" id="userMenu">
+                <button class="auth-btn" id="authBtn" onclick="handleAuthClick()">
+                    <i class="fab fa-google"></i> Sign in
+                </button>
+                <div class="user-dropdown" id="userDropdown">
+                    <a href="dashboard.html"><i class="fas fa-gauge"></i> Dashboard</a>
+                    <button class="signout-btn" onclick="signOutUser()"><i class="fas fa-sign-out-alt"></i> Sign out</button>
+                </div>
+            </div>
+        </div>
+        <button class="mobile-menu-btn"><i class="fas fa-bars"></i></button>
+    </div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+    <div class="mobile-search">
+        <input type="text" placeholder="Search books..." id="mobileSearchInput">
+        <button onclick="doMobileSearch()"><i class="fas fa-search"></i></button>
+    </div>
+    <a href="index.html"><i class="fas fa-house"></i> Home</a>
+    <a href="library.html" class="active"><i class="fas fa-book-open"></i> Library</a>
+    <a href="recent.html"><i class="fas fa-clock"></i> Recent</a>
+    <a href="dashboard.html"><i class="fas fa-gauge"></i> Dashboard</a>
+    <div class="mobile-menu-divider"></div>
+    <div id="mobileAuth"></div>
+</div>
+
+<div class="page-wrapper">
+    <div class="container">
+        <div class="page-header">
+            <h1>Library</h1>
+            <p id="librarySubtitle">Loading books...</p>
+        </div>
+        <div class="books-grid" id="booksGrid">
+            <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading...</p></div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2025 Lusales Archive · All rights reserved.</p>
+        <div class="footer-links">
+            <a href="#">Privacy</a><a href="#">Terms</a><a href="#">Contact</a>
+        </div>
+    </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+<script src="firebase.js"></script>
+<script src="theme.js"></script>
+<script src="nav.js"></script>
+<script>
+    let books       = [];
+    let chapters    = [];
+    let savedBooks  = new Set();
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        initNav();
+        await loadData();
+        checkSearchParam();
+    });
+
+    function onAuthReady(user) {
+        if (user) loadSavedBooks();
+        else { savedBooks.clear(); renderBooks(books); }
+    }
+
+    async function loadData() {
+        try {
+            const [bSnap, cSnap] = await Promise.all([
+                db.collection('books').get(),
+                db.collection('chapters').get()
+            ]);
+            books    = bSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+            chapters = cSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderBooks(books);
+            document.getElementById('librarySubtitle').textContent =
+                `${books.length} book${books.length !== 1 ? 's' : ''} in the archive`;
+        } catch (err) {
+            document.getElementById('booksGrid').innerHTML =
+                '<div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>Failed to load books.</p></div>';
+        }
+    }
+
+    async function loadSavedBooks() {
+        if (!currentUser) return;
+        try {
+            const snap = await db.collection('savedBooks')
+                .where('userId', '==', currentUser.uid).get();
+            savedBooks = new Set(snap.docs.map(d => d.data().bookId));
+            renderBooks(currentBooks || books);
+        } catch (err) { console.error(err); }
+    }
+
+    let currentBooks = null;
+
+    function renderBooks(list) {
+        currentBooks = list;
+        const grid = document.getElementById('booksGrid');
+        if (!grid) return;
+
+        if (list.length === 0) {
+            grid.innerHTML = `<div class="empty-state"><i class="fas fa-book-open"></i><p>No books found.</p></div>`;
+            return;
+        }
+
+        grid.innerHTML = '';
+        list.forEach(book => {
+            const bookChapters = chapters.filter(c => c.bookId === book.id);
+            const firstChapter = [...bookChapters].sort((a,b) => new Date(a.date)-new Date(b.date))[0];
+            const isSaved      = savedBooks.has(book.id);
+
+            const card = document.createElement('div');
+            card.className = 'book-card';
+            card.innerHTML = `
+                <button class="book-save-btn ${isSaved ? 'saved' : ''}"
+                    onclick="toggleSave(event,'${book.id}')"
+                    title="${isSaved ? 'Remove from library' : 'Save to library'}">
+                    <i class="${isSaved ? 'fas' : 'far'} fa-bookmark"></i>
+                </button>
+                <div class="book-cover" style="background:${book.coverColor || randomCover()}"
+                    onclick="openBook('${firstChapter?.id || ''}')">
+                    <i class="fas fa-book"></i>
+                </div>
+                <div class="book-info" onclick="openBook('${firstChapter?.id || ''}')">
+                    <h3>${escHtml(book.title)}</h3>
+                    <p class="author">by ${escHtml(book.author)}</p>
+                    <span class="chapter-count">${bookChapters.length} chapter${bookChapters.length !== 1 ? 's' : ''}</span>
+                </div>`;
+            grid.appendChild(card);
+        });
+    }
+
+    function openBook(chapterId) {
+        if (chapterId) window.location.href = `reader.html?chapter=${chapterId}`;
+        else showToast('This book has no chapters yet.');
+    }
+
+    async function toggleSave(e, bookId) {
+        e.stopPropagation();
+        if (!currentUser) { showToast('Sign in to save books'); return; }
+
+        const ref = db.collection('savedBooks').doc(`${currentUser.uid}_${bookId}`);
+        const btn = e.currentTarget;
+        const icon = btn.querySelector('i');
+
+        try {
+            if (savedBooks.has(bookId)) {
+                await ref.delete();
+                savedBooks.delete(bookId);
+                btn.classList.remove('saved');
+                icon.className = 'far fa-bookmark';
+                showToast('Removed from library');
+            } else {
+                const book = books.find(b => b.id === bookId);
+                await ref.set({
+                    userId: currentUser.uid, bookId,
+                    bookTitle: book?.title || '', savedAt: new Date().toISOString()
+                });
+                savedBooks.add(bookId);
+                btn.classList.add('saved');
+                icon.className = 'fas fa-bookmark';
+                showToast('Saved to library!');
+            }
+        } catch (err) { showToast('Error saving book'); }
+    }
+
+    function checkSearchParam() {
+        const params = new URLSearchParams(window.location.search);
+        const q = params.get('search');
+        if (q) {
+            document.getElementById('searchInput').value = q;
+            filterBooks(q);
+        }
+    }
+
+    function doSearch() {
+        const q = document.getElementById('searchInput')?.value.trim();
+        filterBooks(q);
+    }
+
+    function doMobileSearch() {
+        const q = document.getElementById('mobileSearchInput')?.value.trim();
+        filterBooks(q);
+    }
+
+    function filterBooks(q) {
+        if (!q) { renderBooks(books); return; }
+        const results = books.filter(b =>
+            b.title.toLowerCase().includes(q.toLowerCase()) ||
+            b.author.toLowerCase().includes(q.toLowerCase()) ||
+            (b.description && b.description.toLowerCase().includes(q.toLowerCase()))
+        );
+        renderBooks(results);
+        document.getElementById('librarySubtitle').textContent =
+            `${results.length} result${results.length !== 1 ? 's' : ''} for "${q}"`;
+    }
+
+    document.getElementById('searchInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+    document.getElementById('mobileSearchInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') doMobileSearch(); });
+</script>
+</body>
+</html>
