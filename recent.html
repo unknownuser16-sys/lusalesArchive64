@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recent Updates — Lusales Archive</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>(function(){const t=localStorage.getItem('lusales_theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="container">
+        <div class="logo"><a href="index.html"><i class="fas fa-book"></i> lusaleArchive</a></div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="library.html">Library</a>
+            <a href="recent.html" class="active">Recent</a>
+        </div>
+        <div class="nav-right">
+            <div class="search-box">
+                <input type="text" placeholder="Search books..." id="searchInput">
+                <button onclick="window.location.href='library.html?search='+encodeURIComponent(document.getElementById(`searchInput`).value)"><i class="fas fa-search"></i></button>
+            </div>
+            <div id="themeSwitcherMount"></div>
+            <div class="user-menu" id="userMenu">
+                <button class="auth-btn" id="authBtn" onclick="handleAuthClick()">
+                    <i class="fab fa-google"></i> Sign in
+                </button>
+                <div class="user-dropdown" id="userDropdown">
+                    <a href="dashboard.html"><i class="fas fa-gauge"></i> Dashboard</a>
+                    <button class="signout-btn" onclick="signOutUser()"><i class="fas fa-sign-out-alt"></i> Sign out</button>
+                </div>
+            </div>
+        </div>
+        <button class="mobile-menu-btn"><i class="fas fa-bars"></i></button>
+    </div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+    <a href="index.html"><i class="fas fa-house"></i> Home</a>
+    <a href="library.html"><i class="fas fa-book-open"></i> Library</a>
+    <a href="recent.html" class="active"><i class="fas fa-clock"></i> Recent</a>
+    <a href="dashboard.html"><i class="fas fa-gauge"></i> Dashboard</a>
+    <div class="mobile-menu-divider"></div>
+    <div id="mobileAuth"></div>
+</div>
+
+<div class="page-wrapper">
+    <div class="container">
+        <div class="page-header">
+            <h1>Recent Updates</h1>
+            <p id="recentSubtitle">Latest chapters from the archive</p>
+        </div>
+        <div class="chapters-list" id="chaptersList">
+            <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading...</p></div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2025 Lusales Archive · All rights reserved.</p>
+        <div class="footer-links">
+            <a href="#">Privacy</a><a href="#">Terms</a><a href="#">Contact</a>
+        </div>
+    </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+<script src="firebase.js"></script>
+<script src="theme.js"></script>
+<script src="nav.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        initNav();
+        await loadRecent();
+    });
+
+    async function loadRecent() {
+        const list = document.getElementById('chaptersList');
+        try {
+            const [bSnap, cSnap] = await Promise.all([
+                db.collection('books').get(),
+                db.collection('chapters').get()
+            ]);
+
+            const books    = bSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+            const chapters = cSnap.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            document.getElementById('recentSubtitle').textContent =
+                `${chapters.length} chapter${chapters.length !== 1 ? 's' : ''} in the archive`;
+
+            if (chapters.length === 0) {
+                list.innerHTML = '<div class="empty-state"><i class="fas fa-scroll"></i><p>No chapters yet.</p></div>';
+                return;
+            }
+
+            list.innerHTML = '';
+            chapters.forEach(chapter => {
+                const book  = books.find(b => b.id === chapter.bookId);
+                const entry = document.createElement('div');
+                entry.className = 'chapter-entry';
+                entry.onclick = () => window.location.href = `reader.html?chapter=${chapter.id}`;
+                entry.innerHTML = `
+                    <div class="chapter-entry-info">
+                        <h4>${escHtml(chapter.title)}</h4>
+                        <span class="book-name">${book ? escHtml(book.title) : 'Unknown Book'}</span>
+                    </div>
+                    <div class="chapter-entry-meta">${formatDate(chapter.date)}</div>`;
+                list.appendChild(entry);
+            });
+        } catch (err) {
+            list.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>Failed to load chapters.</p></div>';
+        }
+    }
+</script>
+</body>
+</html>
