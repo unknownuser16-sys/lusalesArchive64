@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library - Lusales Archive</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>(function(){ const saved=localStorage.getItem('lusales_theme')||'black'; document.documentElement.setAttribute('data-theme',saved); })();</script>
+</head>
+<body>
+<nav class="navbar">
+    <div class="container">
+        <div class="logo"><h1 onclick="window.location.href='index.html'"><i class="fas fa-book"></i> lusaleArchive</h1></div>
+        <div class="nav-links" id="navLinks">
+            <a href="index.html">Home</a><a href="library.html">Library</a><a href="index.html#recent">Recent</a>
+            <div class="search-box"><input type="text" id="searchInput" placeholder="Search books..."><button id="searchBtn"><i class="fas fa-search"></i></button></div>
+            <div id="themeSwitcherMount"></div>
+            <div class="user-menu" id="userMenu"><button class="auth-btn" id="authBtn"><i class="fab fa-google"></i> Sign in</button><div class="user-dropdown" id="userDropdown"><a href="dashboard.html" id="dashboardLink" style="display:none"><i class="fas fa-tachometer-alt"></i> Dashboard</a><button class="signout-btn" id="signoutBtn"><i class="fas fa-sign-out-alt"></i> Sign out</button></div></div>
+        </div>
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+    </div>
+</nav>
+<main class="container">
+    <div class="section-header"><h2><i class="fas fa-book"></i> All Books</h2></div>
+    <div class="books-grid" id="booksGrid"></div>
+</main>
+<footer><div class="container"><p>&copy; 2025 Lusales Archive</p><div class="footer-links"><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Contact</a></div></div></footer>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+<script src="theme.js"></script>
+<script>
+    const firebaseConfig = { apiKey:"AIzaSyBnsU904MyOFhK3zLJB02U39e9f2UnGWio", authDomain:"lusales-archive.firebaseapp.com", projectId:"lusales-archive", storageBucket:"lusales-archive.firebasestorage.app", messagingSenderId:"56870938100", appId:"1:56870938100:web:28aa9c471f24e3f9ee05a1" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+    let allBooks=[], allChapters=[], currentUser=null;
+
+    document.addEventListener('DOMContentLoaded',()=>{
+        loadSavedTheme(); buildThemeSwitcher('themeSwitcherMount');
+        auth.onAuthStateChanged(user=>{ currentUser=user; updateAuthUI(user); updateDashboardLink(); });
+        loadLibrary();
+        setupSearch();
+        // hamburger
+        const mb=document.getElementById('mobileMenuBtn'), nl=document.getElementById('navLinks');
+        if(mb) mb.onclick=()=>nl.classList.toggle('open');
+        document.addEventListener('click',e=>{ const m=document.getElementById('userMenu'); if(m&&!m.contains(e.target)) m.classList.remove('open'); });
+    });
+    async function loadLibrary(){
+        const [bs,cs]=await Promise.all([db.collection('books').get(), db.collection('chapters').get()]);
+        allBooks=bs.docs.map(d=>({id:d.id,...d.data()}));
+        allChapters=cs.docs.map(d=>({id:d.id,...d.data()}));
+        const params=new URLSearchParams(window.location.search);
+        const search=params.get('search')?.toLowerCase()||'';
+        let filtered=allBooks;
+        if(search) filtered=allBooks.filter(b=>b.title.toLowerCase().includes(search)||(b.author&&b.author.toLowerCase().includes(search)));
+        renderBooks(filtered);
+        if(search && filtered.length===0) document.getElementById('booksGrid').innerHTML=`<div class="empty-state"><i class="fas fa-search"></i><p>No books found for "${escapeHtml(search)}"</p></div>`;
+    }
+    function renderBooks(books){
+        const grid=document.getElementById('booksGrid');
+        grid.innerHTML='';
+        for(let book of books){
+            const bookChapters=allChapters.filter(c=>c.bookId===book.id);
+            const firstChapter=[...bookChapters].sort((a,b)=>new Date(a.date)-new Date(b.date))[0];
+            const card=document.createElement('div'); card.className='book-card';
+            card.onclick=()=>{ if(firstChapter) window.location.href=`reader.html?chapter=${firstChapter.id}`; else alert('No chapters yet.'); };
+            card.innerHTML=`<div class="book-cover" style="background:${book.coverColor||'#333'}"><i class="fas fa-book"></i></div><div class="book-info"><h3>${escapeHtml(book.title)}</h3><p class="author">${escapeHtml(book.author)}</p><span class="chapter-count">${bookChapters.length} chapters</span></div>`;
+            grid.appendChild(card);
+        }
+    }
+    function setupSearch(){
+        const input=document.getElementById('searchInput'), btn=document.getElementById('searchBtn');
+        const doSearch=()=>{ const q=input.value.trim(); window.location.href=`library.html${q?`?search=${encodeURIComponent(q)}`:''}`; };
+        if(btn) btn.onclick=doSearch;
+        if(input) input.addEventListener('keydown',e=>{ if(e.key==='Enter') doSearch(); });
+    }
+    function updateAuthUI(user){ const btn=document.getElementById('authBtn'); if(!btn) return; if(user){ btn.innerHTML=user.photoURL?`<img src="${user.photoURL}"> ${user.displayName?.split(' ')[0]||'User'}`:`<i class="fas fa-user-circle"></i> ${user.displayName?.split(' ')[0]||'User'}`; } else btn.innerHTML='<i class="fab fa-google"></i> Sign in'; }
+    function updateDashboardLink(){ const link=document.getElementById('dashboardLink'); if(link) link.style.display=currentUser?'flex':'none'; }
+    window.handleAuthClick=function(){ if(currentUser) document.getElementById('userMenu')?.classList.toggle('open'); else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(()=>alert('Sign in failed')); };
+    window.signOut=function(){ auth.signOut().then(()=>window.location.href='index.html'); };
+    function escapeHtml(str){ if(!str) return ''; return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+</script>
+</body>
+</html>
