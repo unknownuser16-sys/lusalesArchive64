@@ -379,6 +379,6 @@
     document.addEventListener('keydown',e=>{ if(e.key==='ArrowRight') navigateChapter(1); if(e.key==='ArrowLeft') navigateChapter(-1); if(e.key==='Escape') goBack(); });
     function escapeHtml(str){ if(!str) return ''; return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
     function formatDate(dateStr){ return dateStr ? new Date(dateStr).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) : ''; }
-</script>
+<script src="nav.js"></script>
 </body>
 </html>
