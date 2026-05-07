@@ -1,13 +1,11 @@
 /* ============================================================
-   LUSALES ARCHIVE — MAIN STYLESHEET (UPDATED)
-   - removed hero-stats
-   - hamburger menu working
-   - nav font changed to Calibri
+   LUSALES ARCHIVE — MAIN STYLESHEET
+   Black / White / Custom themes, responsive, calibri nav
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
 
-/* ── DEFAULT THEME VARS (will be overridden by theme.js) but define fallback */
+/* Base variables (will be overridden by theme.js) */
 :root {
     --bg:          #000000;
     --bg-card:     #111111;
@@ -55,9 +53,7 @@ a:hover { color: var(--text-muted); }
     padding: 0 2rem;
 }
 
-/* ============================================================
-   NAVBAR with hamburger fix
-   ============================================================ */
+/* ========== NAVBAR ========== */
 .navbar {
     position: sticky;
     top: 0;
@@ -89,20 +85,18 @@ a:hover { color: var(--text-muted); }
 }
 .logo h1 i { color: var(--accent); }
 
-/* Nav links - improved font */
+/* Nav links with Calibri */
 .nav-links {
     display: flex;
     align-items: center;
     gap: 1.5rem;
 }
-
 .nav-links a {
     font-family: var(--font-nav);
     font-size: 0.85rem;
     font-weight: 500;
     letter-spacing: 0.02em;
     color: var(--text-muted);
-    transition: color 0.2s;
 }
 .nav-links a:hover { color: var(--accent); }
 
@@ -150,7 +144,6 @@ a:hover { color: var(--text-muted); }
     font-family: var(--font-nav);
     font-size: 0.8rem;
     font-weight: 500;
-    transition: all 0.2s;
     white-space: nowrap;
 }
 .auth-btn:hover { border-color: var(--accent); color: var(--accent); }
@@ -192,7 +185,7 @@ a:hover { color: var(--text-muted); }
 .user-dropdown .signout-btn { border-top: 1px solid var(--border); color: #e74c3c; }
 .user-dropdown .signout-btn:hover { background: rgba(231,76,60,0.1); color: #e74c3c; }
 
-/* Mobile menu button & responsive */
+/* Mobile menu */
 .mobile-menu-btn {
     display: none;
     background: none;
@@ -231,9 +224,102 @@ a:hover { color: var(--text-muted); }
     .container { padding: 0 1rem; }
 }
 
-/* ============================================================
-   HERO (no stats bar)
-   ============================================================ */
+/* ========== THEME SWITCHER ========== */
+.theme-switcher { position: relative; }
+.theme-toggle-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 0.4rem 0.6rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+}
+.theme-toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
+.theme-panel {
+    display: none;
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    min-width: 180px;
+    box-shadow: var(--shadow);
+    z-index: 300;
+}
+.theme-panel.open { display: block; }
+.theme-panel-header {
+    padding: 0.6rem 1rem;
+    font-family: var(--font-nav);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+}
+.theme-options { padding: 0.4rem; display: flex; flex-direction: column; gap: 0.2rem; }
+.theme-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-family: var(--font-nav);
+    font-size: 0.78rem;
+    width: 100%;
+    text-align: left;
+}
+.theme-option:hover { background: var(--bg-hover); color: var(--text); }
+.theme-option.active { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+.custom-theme-editor {
+    padding: 0.75rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.color-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+.color-row label {
+    font-family: var(--font-nav);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+.color-row input[type="color"] {
+    width: 36px;
+    height: 24px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+    background: none;
+}
+.apply-custom-btn {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--font-nav);
+    font-size: 0.72rem;
+    font-weight: 600;
+    margin-top: 0.25rem;
+}
+.apply-custom-btn:hover { opacity: 0.85; }
+
+/* ========== HERO (no stats) ========== */
 .hero {
     padding: 4rem 0 3rem;
     text-align: center;
@@ -253,9 +339,7 @@ a:hover { color: var(--text-muted); }
     letter-spacing: 0.5em;
 }
 
-/* ============================================================
-   BOOKS GRID (used in library.html & dashboard)
-   ============================================================ */
+/* ========== BOOKS GRID ========== */
 .books-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -297,8 +381,15 @@ a:hover { color: var(--text-muted); }
     font-size: 0.75rem;
     color: var(--accent);
 }
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-dim);
+}
+.empty-state i { font-size: 2.5rem; margin-bottom: 1rem; }
 
-/* Recent chapters list */
+/* ========== RECENT CHAPTERS ========== */
 .recent-chapters {
     padding: 2rem 0;
 }
@@ -306,11 +397,18 @@ a:hover { color: var(--text-muted); }
     border-bottom: 1px solid var(--border);
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 .section-header h2 {
     font-family: var(--font-display);
     font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
 }
+.section-header h2 i { color: var(--accent); }
 .chapters-list {
     display: flex;
     flex-direction: column;
@@ -334,9 +432,11 @@ a:hover { color: var(--text-muted); }
     font-family: var(--font-nav);
     font-size: 0.75rem;
     color: var(--text-dim);
+    white-space: nowrap;
+    margin-left: 1rem;
 }
 
-/* Footer */
+/* ========== FOOTER ========== */
 footer {
     margin-top: 4rem;
     padding: 2rem 0;
@@ -346,17 +446,26 @@ footer {
 footer .container {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     flex-wrap: wrap;
     gap: 1rem;
+}
+footer p {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    font-family: var(--font-nav);
 }
 .footer-links { display: flex; gap: 1.5rem; }
 .footer-links a {
     font-family: var(--font-nav);
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     color: var(--text-dim);
+    text-transform: uppercase;
 }
+.footer-links a:hover { color: var(--accent); }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--border); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
