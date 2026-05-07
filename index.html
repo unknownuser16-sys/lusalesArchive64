@@ -2,65 +2,69 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lusales Archive</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        (function() {
-            const saved = localStorage.getItem('lusales_theme') || 'black';
-            document.documentElement.setAttribute('data-theme', saved);
-        })();
-    </script>
+    <script>(function(){const t=localStorage.getItem('lusales_theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
 </head>
 <body>
 
 <nav class="navbar">
     <div class="container">
-        <div class="logo">
-            <h1 onclick="window.scrollTo({top:0,behavior:'smooth'})">
-                <i class="fas fa-book"></i> lusaleArchive
-            </h1>
-        </div>
-        <div class="nav-links" id="navLinks">
-            <a href="index.html">Home</a>
+        <div class="logo"><a href="index.html"><i class="fas fa-book"></i> lusaleArchive</a></div>
+        <div class="nav-links">
+            <a href="index.html" class="active">Home</a>
             <a href="library.html">Library</a>
-            <a href="#recent">Recent</a>
+            <a href="recent.html">Recent</a>
+        </div>
+        <div class="nav-right">
             <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Search books...">
-                <button id="searchBtn"><i class="fas fa-search"></i></button>
+                <input type="text" placeholder="Search books..." id="searchInput">
+                <button onclick="doSearch()"><i class="fas fa-search"></i></button>
             </div>
             <div id="themeSwitcherMount"></div>
             <div class="user-menu" id="userMenu">
-                <button class="auth-btn" id="authBtn">
+                <button class="auth-btn" id="authBtn" onclick="handleAuthClick()">
                     <i class="fab fa-google"></i> Sign in
                 </button>
                 <div class="user-dropdown" id="userDropdown">
-                    <a href="dashboard.html" id="dashboardLink" style="display:none"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-                    <button class="signout-btn" id="signoutBtn"><i class="fas fa-sign-out-alt"></i> Sign out</button>
+                    <a href="dashboard.html"><i class="fas fa-gauge"></i> Dashboard</a>
+                    <button class="signout-btn" onclick="signOutUser()"><i class="fas fa-sign-out-alt"></i> Sign out</button>
                 </div>
             </div>
         </div>
-        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <button class="mobile-menu-btn"><i class="fas fa-bars"></i></button>
     </div>
 </nav>
 
-<main class="container">
-    <section class="hero" id="home">
-        <div class="hero-content">
-            <h2>Welcome to the Archive</h2>
-            <p>A collection of original stories and chapters, updated regularly.</p>
-            <div class="hero-divider">— ✦ —</div>
-        </div>
-    </section>
+<!-- Mobile menu -->
+<div class="mobile-menu" id="mobileMenu">
+    <div class="mobile-search">
+        <input type="text" placeholder="Search books..." id="mobileSearchInput">
+        <button onclick="doMobileSearch()"><i class="fas fa-search"></i></button>
+    </div>
+    <a href="index.html"><i class="fas fa-house"></i> Home</a>
+    <a href="library.html"><i class="fas fa-book-open"></i> Library</a>
+    <a href="recent.html"><i class="fas fa-clock"></i> Recent</a>
+    <a href="dashboard.html"><i class="fas fa-gauge"></i> Dashboard</a>
+    <div class="mobile-menu-divider"></div>
+    <div id="mobileAuth"></div>
+</div>
 
-    <section class="recent-chapters" id="recent">
-        <div class="section-header">
-            <h2><i class="fas fa-clock"></i> Recent Updates</h2>
+<!-- Hero -->
+<section class="hero">
+    <div class="hero-content">
+        <span class="hero-eyebrow">Lusales Archive</span>
+        <h1>Stories worth <em>reading</em></h1>
+        <p>A personal archive of original fiction — novels, short stories, and chapters. Updated regularly.</p>
+        <div class="hero-actions">
+            <a href="library.html" class="btn btn-primary"><i class="fas fa-book-open"></i> Browse Library</a>
+            <a href="recent.html" class="btn btn-secondary"><i class="fas fa-clock"></i> Recent Updates</a>
         </div>
-        <div class="chapters-list" id="recentChapters"></div>
-    </section>
-</main>
+        <div class="hero-divider">— ✦ —</div>
+    </div>
+</section>
 
 <footer>
     <div class="container">
@@ -73,28 +77,29 @@
     </div>
 </footer>
 
+<div class="toast" id="toast"></div>
+
 <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+<script src="firebase.js"></script>
 <script src="theme.js"></script>
-<script src="main.js"></script>
-
+<script src="nav.js"></script>
 <script>
-    // Hamburger menu toggle (ensures it works)
-    const mobileBtn = document.getElementById('mobileMenuBtn');
-    const navLinks = document.getElementById('navLinks');
-    if (mobileBtn && navLinks) {
-        mobileBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            navLinks.classList.toggle('open');
-        });
-        // Close when clicking outside
-        document.addEventListener('click', (event) => {
-            if (!navLinks.contains(event.target) && !mobileBtn.contains(event.target)) {
-                navLinks.classList.remove('open');
-            }
-        });
+    document.addEventListener('DOMContentLoaded', () => initNav());
+
+    function doSearch() {
+        const q = document.getElementById('searchInput')?.value.trim();
+        if (q) window.location.href = `library.html?search=${encodeURIComponent(q)}`;
     }
+
+    function doMobileSearch() {
+        const q = document.getElementById('mobileSearchInput')?.value.trim();
+        if (q) window.location.href = `library.html?search=${encodeURIComponent(q)}`;
+    }
+
+    document.getElementById('searchInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+    document.getElementById('mobileSearchInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') doMobileSearch(); });
 </script>
 </body>
 </html>
