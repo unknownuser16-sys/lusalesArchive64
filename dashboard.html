@@ -3,100 +3,809 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Lusales Archive</title>
+    <title>Dashboard — Lusales Archive</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>(function(){ const saved=localStorage.getItem('lusales_theme')||'black'; document.documentElement.setAttribute('data-theme',saved); })();</script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Crimson+Text:wght@400;600&display=swap" rel="stylesheet">
+    <script>(function(){const t=localStorage.getItem('lusales_theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
+    <style>
+        /* ── DASHBOARD SPECIFIC STYLES ── */
+
+        .dash-wrapper {
+            padding-top: calc(var(--nav-height) + 0px);
+            min-height: 100vh;
+        }
+
+        /* ── LOGIN WALL ── */
+        .login-wall {
+            min-height: calc(100vh - var(--nav-height));
+            display: flex; align-items: center; justify-content: center;
+            text-align: center; padding: 2rem;
+        }
+
+        .login-wall-inner { max-width: 380px; }
+
+        .login-wall-inner .lock-icon {
+            width: 64px; height: 64px; border-radius: 50%;
+            background: var(--bg-card); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1.75rem; font-size: 1.5rem; color: var(--text-dim);
+        }
+
+        .login-wall-inner h2 {
+            font-family: var(--font-display);
+            font-size: 1.75rem; color: var(--text);
+            margin-bottom: 0.6rem; line-height: 1.2;
+        }
+
+        .login-wall-inner p {
+            font-family: var(--font-ui); font-size: 0.9rem;
+            color: var(--text-muted); margin-bottom: 2rem; line-height: 1.6;
+        }
+
+        .google-signin-btn {
+            display: inline-flex; align-items: center; gap: 0.75rem;
+            background: var(--text); color: var(--bg);
+            border: none; padding: 0.75rem 1.75rem;
+            border-radius: var(--radius); cursor: pointer;
+            font-family: var(--font-ui); font-size: 0.9rem;
+            font-weight: 600; transition: opacity 0.2s;
+        }
+
+        .google-signin-btn:hover { opacity: 0.85; }
+
+        /* ── PROFILE BANNER ── */
+        .profile-banner {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 2.5rem 0 0;
+        }
+
+        .profile-banner .container {
+            display: flex;
+            align-items: flex-end;
+            gap: 1.75rem;
+            padding-bottom: 1.5rem;
+        }
+
+        .avatar-wrap {
+            position: relative; flex-shrink: 0;
+        }
+
+        .avatar {
+            width: 88px; height: 88px; border-radius: 50%;
+            border: 3px solid var(--border);
+            background: var(--bg-hover);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.2rem; color: var(--text-dim);
+            overflow: hidden; flex-shrink: 0;
+        }
+
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+        .avatar-change-btn {
+            position: absolute; bottom: 2px; right: 2px;
+            width: 24px; height: 24px; border-radius: 50%;
+            background: var(--text); color: var(--bg);
+            border: none; cursor: pointer; font-size: 0.6rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.2s;
+        }
+
+        .avatar-change-btn:hover { opacity: 0.8; }
+
+        .profile-banner-info { flex: 1; min-width: 0; }
+
+        .profile-banner-name {
+            font-family: var(--font-display);
+            font-size: 1.6rem; color: var(--text);
+            margin-bottom: 0.2rem; line-height: 1.2;
+        }
+
+        .profile-banner-meta {
+            font-family: var(--font-ui); font-size: 0.82rem;
+            color: var(--text-muted); margin-bottom: 0.5rem;
+            display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+        }
+
+        .profile-banner-meta span { display: flex; align-items: center; gap: 0.35rem; }
+
+        .profile-banner-bio {
+            font-family: var(--font-ui); font-size: 0.88rem;
+            color: var(--text-muted); line-height: 1.5;
+        }
+
+        .profile-banner-bio.placeholder { color: var(--text-dim); font-style: italic; }
+
+        .profile-banner-actions {
+            flex-shrink: 0; display: flex; gap: 0.5rem; align-items: flex-end;
+            padding-bottom: 0.1rem;
+        }
+
+        .edit-profile-btn {
+            background: none; border: 1px solid var(--border);
+            color: var(--text-muted); padding: 0.42rem 1rem;
+            border-radius: var(--radius); cursor: pointer;
+            font-family: var(--font-ui); font-size: 0.8rem;
+            display: flex; align-items: center; gap: 0.45rem;
+            transition: all 0.2s;
+        }
+
+        .edit-profile-btn:hover { border-color: var(--accent-dim); color: var(--text); }
+
+        /* ── TABS ── */
+        .dash-tabs {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            position: sticky; top: var(--nav-height); z-index: 50;
+        }
+
+        .dash-tabs .container {
+            display: flex; gap: 0; overflow-x: auto;
+        }
+
+        .dash-tab {
+            background: none; border: none; border-bottom: 2px solid transparent;
+            color: var(--text-muted); padding: 0.9rem 1.25rem;
+            cursor: pointer; font-family: var(--font-ui); font-size: 0.85rem;
+            display: flex; align-items: center; gap: 0.5rem;
+            transition: color 0.2s, border-color 0.2s;
+            white-space: nowrap; flex-shrink: 0;
+        }
+
+        .dash-tab:hover { color: var(--text); }
+        .dash-tab.active { color: var(--text); border-bottom-color: var(--text); }
+        .dash-tab i { font-size: 0.8rem; }
+
+        /* ── CONTENT PANELS ── */
+        .dash-content { padding: 2.5rem 0 5rem; }
+
+        .dash-panel { display: none; }
+        .dash-panel.active { display: block; }
+
+        /* ── EDIT PROFILE PANEL ── */
+        .edit-profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .edit-profile-grid .full-width { grid-column: 1 / -1; }
+
+        .field-group { display: flex; flex-direction: column; gap: 0.35rem; }
+
+        .field-group label {
+            font-family: var(--font-ui); font-size: 0.72rem;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--text-dim);
+        }
+
+        .field-group input,
+        .field-group textarea {
+            background: var(--bg-card); border: 1px solid var(--border);
+            color: var(--text); padding: 0.65rem 0.85rem;
+            border-radius: var(--radius); font-family: var(--font-ui);
+            font-size: 0.9rem; outline: none; transition: border-color 0.2s;
+            box-sizing: border-box; width: 100%;
+        }
+
+        .field-group input:focus,
+        .field-group textarea:focus { border-color: var(--accent-dim); }
+
+        .field-group textarea { resize: vertical; min-height: 90px; }
+
+        .save-btn {
+            background: var(--text); color: var(--bg);
+            border: none; padding: 0.65rem 1.5rem;
+            border-radius: var(--radius); cursor: pointer;
+            font-family: var(--font-ui); font-size: 0.88rem;
+            font-weight: 600; transition: opacity 0.2s;
+            display: inline-flex; align-items: center; gap: 0.5rem;
+        }
+
+        .save-btn:hover { opacity: 0.82; }
+
+        .panel-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); overflow: hidden; margin-bottom: 1.5rem;
+        }
+
+        .panel-card-header {
+            padding: 1rem 1.5rem; border-bottom: 1px solid var(--border);
+            font-family: var(--font-ui); font-size: 0.72rem;
+            letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim);
+        }
+
+        .panel-card-body { padding: 1.5rem; }
+
+        /* ── SAVED BOOKS GRID ── */
+        .saved-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 1rem;
+        }
+
+        .saved-book-card {
+            background: var(--bg); border: 1px solid var(--border);
+            border-radius: var(--radius); overflow: hidden;
+            cursor: pointer; transition: transform 0.2s, border-color 0.2s;
+            position: relative;
+        }
+
+        .saved-book-card:hover { transform: translateY(-3px); border-color: var(--accent-dim); }
+
+        .saved-book-cover {
+            height: 150px; display: flex; align-items: center; justify-content: center;
+            font-size: 2.2rem; color: rgba(255,255,255,0.18); position: relative;
+        }
+
+        .saved-book-cover::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.55) 100%);
+        }
+
+        .saved-book-cover i { position: relative; z-index: 1; }
+
+        .saved-book-info { padding: 0.6rem 0.75rem; }
+        .saved-book-info h4 { font-family: var(--font-display); font-size: 0.82rem; color: var(--text); line-height: 1.3; margin-bottom: 0.15rem; }
+        .saved-book-info p { font-family: var(--font-ui); font-size: 0.72rem; color: var(--text-muted); }
+
+        .unsave-btn {
+            position: absolute; top: 0.5rem; right: 0.5rem; z-index: 2;
+            background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.6); width: 26px; height: 26px;
+            border-radius: 50%; cursor: pointer; font-size: 0.65rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; backdrop-filter: blur(4px);
+        }
+
+        .unsave-btn:hover { background: #e74c3c; border-color: #e74c3c; color: white; }
+
+        /* ── ACTIVITY LIST ── */
+        .activity-list { display: flex; flex-direction: column; }
+
+        .activity-row {
+            display: flex; align-items: center; gap: 1rem;
+            padding: 0.85rem 0; border-bottom: 1px solid var(--border);
+        }
+
+        .activity-row:last-child { border-bottom: none; }
+
+        .activity-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--text-dim); flex-shrink: 0;
+        }
+
+        .activity-dot.comment { background: var(--accent-dim); }
+        .activity-dot.rating { background: var(--text-muted); }
+        .activity-dot.saved { background: var(--text-dim); }
+
+        .activity-main { flex: 1; min-width: 0; }
+
+        .activity-text {
+            font-family: var(--font-ui); font-size: 0.85rem;
+            color: var(--text-muted); line-height: 1.4;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        .activity-text strong { color: var(--text); }
+
+        .activity-time {
+            font-family: var(--font-ui); font-size: 0.72rem;
+            color: var(--text-dim); flex-shrink: 0;
+        }
+
+        /* ── STATS ROW ── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-box {
+            background: var(--bg-card);
+            padding: 1.25rem 1.5rem;
+            text-align: center;
+        }
+
+        .stat-box-number {
+            font-family: var(--font-display);
+            font-size: 1.8rem; color: var(--text);
+            line-height: 1; margin-bottom: 0.3rem;
+        }
+
+        .stat-box-label {
+            font-family: var(--font-ui); font-size: 0.72rem;
+            letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim);
+        }
+
+        /* ── EMPTY STATE ── */
+        .dash-empty {
+            text-align: center; padding: 3rem 2rem; color: var(--text-dim);
+        }
+
+        .dash-empty i { font-size: 2rem; display: block; margin-bottom: 1rem; color: var(--border); }
+        .dash-empty p { font-family: var(--font-ui); font-size: 0.88rem; margin-bottom: 1.25rem; }
+        .dash-empty a {
+            font-family: var(--font-ui); font-size: 0.82rem; color: var(--text-muted);
+            border: 1px solid var(--border); padding: 0.5rem 1.25rem;
+            border-radius: var(--radius); text-decoration: none; transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 0.4rem;
+        }
+        .dash-empty a:hover { border-color: var(--accent-dim); color: var(--text); }
+
+        /* Loading spinner */
+        .dash-loading { text-align: center; padding: 3rem; color: var(--text-dim); font-family: var(--font-ui); font-size: 0.85rem; }
+        .dash-loading i { display: block; font-size: 1.5rem; margin-bottom: 0.75rem; color: var(--border); }
+
+        /* Avatar file input */
+        #avatarInput { display: none; }
+
+        @media (max-width: 768px) {
+            .profile-banner .container { flex-direction: column; align-items: flex-start; gap: 1rem; }
+            .profile-banner-actions { width: 100%; }
+            .edit-profile-grid { grid-template-columns: 1fr; }
+            .stats-row { grid-template-columns: repeat(3, 1fr); }
+            .saved-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
 </head>
 <body>
+
 <nav class="navbar">
     <div class="container">
-        <div class="logo"><h1 onclick="window.location.href='index.html'"><i class="fas fa-book"></i> lusaleArchive</h1></div>
-        <div class="nav-links" id="navLinks">
-            <a href="index.html">Home</a><a href="library.html">Library</a><a href="index.html#recent">Recent</a>
-            <div class="search-box"><input type="text" id="searchInput" placeholder="Search books..."><button id="searchBtn"><i class="fas fa-search"></i></button></div>
+        <div class="logo"><a href="index.html"><i class="fas fa-book"></i> lusaleArchive</a></div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="library.html">Library</a>
+            <a href="recent.html">Recent</a>
+        </div>
+        <div class="nav-right">
             <div id="themeSwitcherMount"></div>
-            <div class="user-menu" id="userMenu"><button class="auth-btn" id="authBtn"><i class="fab fa-google"></i> Sign in</button><div class="user-dropdown" id="userDropdown"><a href="dashboard.html" id="dashboardLink" style="display:none"><i class="fas fa-tachometer-alt"></i> Dashboard</a><button class="signout-btn" id="signoutBtn"><i class="fas fa-sign-out-alt"></i> Sign out</button></div></div>
+            <div class="user-menu" id="userMenu">
+                <button class="auth-btn" id="authBtn" onclick="handleAuthClick()">
+                    <i class="fab fa-google"></i> Sign in
+                </button>
+                <div class="user-dropdown" id="userDropdown">
+                    <a href="dashboard.html"><i class="fas fa-gauge"></i> Dashboard</a>
+                    <button class="signout-btn" onclick="signOutUser()"><i class="fas fa-sign-out-alt"></i> Sign out</button>
+                </div>
+            </div>
         </div>
         <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
     </div>
 </nav>
-<main class="container">
-    <h2 style="margin:2rem 0 0.5rem"><i class="fas fa-tachometer-alt"></i> Your Dashboard</h2>
-    <div id="userInfo" style="margin-bottom:2rem;"></div>
-    <div class="section-header"><h3><i class="fas fa-bookmark"></i> Saved Books (Your Library)</h3></div>
-    <div class="books-grid" id="savedBooksGrid"></div>
-</main>
-<footer><div class="container"><p>&copy; 2025 Lusales Archive</p><div class="footer-links"><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Contact</a></div></div></footer>
+
+<div class="mobile-menu" id="mobileMenu">
+    <a href="index.html"><i class="fas fa-house"></i> Home</a>
+    <a href="library.html"><i class="fas fa-book-open"></i> Library</a>
+    <a href="recent.html"><i class="fas fa-clock"></i> Recent</a>
+    <a href="dashboard.html" class="active"><i class="fas fa-gauge"></i> Dashboard</a>
+    <div class="mobile-menu-divider"></div>
+    <div id="mobileAuth"></div>
+</div>
+
+<div class="dash-wrapper">
+
+    <!-- ── LOGIN WALL ── -->
+    <div class="login-wall" id="loginWall">
+        <div class="login-wall-inner">
+            <div class="lock-icon"><i class="fas fa-user"></i></div>
+            <h2>Your dashboard</h2>
+            <p>Sign in to access your personal library, profile settings, and activity history.</p>
+            <button class="google-signin-btn" onclick="signInUser()">
+                <i class="fab fa-google"></i> Continue with Google
+            </button>
+        </div>
+    </div>
+
+    <!-- ── DASHBOARD ── -->
+    <div id="dashMain" style="display:none">
+
+        <!-- Profile banner -->
+        <div class="profile-banner">
+            <div class="container">
+                <div class="avatar-wrap">
+                    <div class="avatar" id="avatarEl"><i class="fas fa-user"></i></div>
+                    <button class="avatar-change-btn" onclick="document.getElementById('avatarInput').click()" title="Change photo">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                    <input type="file" id="avatarInput" accept="image/*" onchange="handleAvatarUpload(event)">
+                </div>
+                <div class="profile-banner-info">
+                    <div class="profile-banner-name" id="bannerName">—</div>
+                    <div class="profile-banner-meta" id="bannerMeta">
+                        <span><i class="fas fa-envelope" style="font-size:0.7rem"></i> <span id="bannerEmail">—</span></span>
+                        <span><i class="fas fa-book" style="font-size:0.7rem"></i> <span id="bannerSaved">0 saved</span></span>
+                    </div>
+                    <div class="profile-banner-bio placeholder" id="bannerBio">No bio yet — add one below.</div>
+                </div>
+                <div class="profile-banner-actions">
+                    <button class="edit-profile-btn" onclick="switchTab('profile')">
+                        <i class="fas fa-pen"></i> Edit Profile
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="dash-tabs">
+                <div class="container">
+                    <button class="dash-tab active" data-tab="library" onclick="switchTab('library')">
+                        <i class="fas fa-bookmark"></i> My Library
+                    </button>
+                    <button class="dash-tab" data-tab="activity" onclick="switchTab('activity')">
+                        <i class="fas fa-chart-line"></i> Activity
+                    </button>
+                    <button class="dash-tab" data-tab="profile" onclick="switchTab('profile')">
+                        <i class="fas fa-user-pen"></i> Edit Profile
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="dash-content">
+            <div class="container">
+
+                <!-- ── LIBRARY TAB ── -->
+                <div class="dash-panel active" id="panel-library">
+                    <div class="stats-row" id="statsRow">
+                        <div class="stat-box">
+                            <div class="stat-box-number" id="statSaved">—</div>
+                            <div class="stat-box-label">Saved</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-box-number" id="statComments">—</div>
+                            <div class="stat-box-label">Comments</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-box-number" id="statRatings">—</div>
+                            <div class="stat-box-label">Ratings</div>
+                        </div>
+                    </div>
+
+                    <div class="panel-card">
+                        <div class="panel-card-header">Saved Books</div>
+                        <div class="panel-card-body">
+                            <div class="saved-grid" id="savedGrid">
+                                <div class="dash-loading"><i class="fas fa-spinner fa-spin"></i>Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── ACTIVITY TAB ── -->
+                <div class="dash-panel" id="panel-activity">
+                    <div class="panel-card">
+                        <div class="panel-card-header">Recent Comments</div>
+                        <div class="panel-card-body">
+                            <div class="activity-list" id="activityComments">
+                                <div class="dash-loading"><i class="fas fa-spinner fa-spin"></i>Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel-card">
+                        <div class="panel-card-header">Books Rated</div>
+                        <div class="panel-card-body">
+                            <div class="activity-list" id="activityRatings">
+                                <div class="dash-loading"><i class="fas fa-spinner fa-spin"></i>Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── PROFILE TAB ── -->
+                <div class="dash-panel" id="panel-profile">
+                    <div class="panel-card">
+                        <div class="panel-card-header">Profile Settings</div>
+                        <div class="panel-card-body">
+                            <div class="edit-profile-grid">
+                                <div class="field-group">
+                                    <label>Display Name</label>
+                                    <input type="text" id="fieldName" placeholder="Your name">
+                                </div>
+                                <div class="field-group">
+                                    <label>Email</label>
+                                    <input type="text" id="fieldEmail" placeholder="—" disabled style="opacity:0.5;cursor:not-allowed">
+                                </div>
+                                <div class="field-group full-width">
+                                    <label>Bio</label>
+                                    <textarea id="fieldBio" placeholder="Tell readers a bit about yourself..."></textarea>
+                                </div>
+                            </div>
+                            <div style="margin-top:1rem">
+                                <button class="save-btn" onclick="saveProfile()">
+                                    <i class="fas fa-check"></i> Save Changes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel-card">
+                        <div class="panel-card-header">Account</div>
+                        <div class="panel-card-body" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+                            <div>
+                                <div style="font-family:var(--font-ui);font-size:0.88rem;color:var(--text);margin-bottom:0.2rem">Sign out of your account</div>
+                                <div style="font-family:var(--font-ui);font-size:0.8rem;color:var(--text-muted)">You can sign back in anytime with Google.</div>
+                            </div>
+                            <button onclick="signOutUser()" style="background:none;border:1px solid #e74c3c;color:#e74c3c;padding:0.5rem 1.1rem;border-radius:var(--radius);cursor:pointer;font-family:var(--font-ui);font-size:0.82rem;transition:all 0.2s;display:flex;align-items:center;gap:0.5rem">
+                                <i class="fas fa-sign-out-alt"></i> Sign out
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+<script src="firebase.js"></script>
 <script src="theme.js"></script>
+<script src="nav.js"></script>
 <script>
-    const firebaseConfig = { apiKey:"AIzaSyBnsU904MyOFhK3zLJB02U39e9f2UnGWio", authDomain:"lusales-archive.firebaseapp.com", projectId:"lusales-archive", storageBucket:"lusales-archive.firebasestorage.app", messagingSenderId:"56870938100", appId:"1:56870938100:web:28aa9c471f24e3f9ee05a1" };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const auth = firebase.auth();
-    let currentUser = null;
+    let allBooks    = [];
+    let savedBookIds = [];
 
-    auth.onAuthStateChanged(async user => {
-        currentUser = user;
-        updateAuthUI(user);
-        updateDashboardLink();
-        if(!user){
-            document.getElementById('savedBooksGrid').innerHTML='<div class="empty-state"><i class="fas fa-sign-in-alt"></i><p>Please sign in to view your dashboard.</p></div>';
-            document.getElementById('userInfo').innerHTML='<p>Not signed in.</p>';
-            return;
-        }
-        document.getElementById('userInfo').innerHTML=`<div style="display:flex; align-items:center; gap:1rem">${user.photoURL?`<img src="${user.photoURL}" style="width:48px; border-radius:50%">`:''}<div><strong>${escapeHtml(user.displayName||user.email)}</strong><br><span style="color:var(--text-muted)">${escapeHtml(user.email)}</span></div></div>`;
-        await loadSavedBooks();
+    document.addEventListener('DOMContentLoaded', async () => {
+        initNav();
+        const bSnap = await db.collection('books').get().catch(() => ({ docs: [] }));
+        allBooks = bSnap.docs.map(d => ({ id: d.id, ...d.data() }));
     });
 
-    async function loadSavedBooks(){
-        const snap = await db.collection('bookmarks').where('userId','==',currentUser.uid).get();
-        const bookmarks = snap.docs.map(d=>({id:d.id,...d.data()}));
-        const grid = document.getElementById('savedBooksGrid');
-        if(!bookmarks.length){
-            grid.innerHTML='<div class="empty-state"><i class="fas fa-book-open"></i><p>No saved books. Browse the <a href="library.html">Library</a> and bookmark some!</p></div>';
+    function onAuthReady(user) {
+        if (!user) {
+            document.getElementById('loginWall').style.display = 'flex';
+            document.getElementById('dashMain').style.display  = 'none';
             return;
         }
-        const bookIds = bookmarks.map(b=>b.bookId);
-        const booksSnap = await db.collection('books').where(firebase.firestore.FieldPath.documentId(), 'in', bookIds).get();
-        const books = booksSnap.docs.map(d=>({id:d.id,...d.data()}));
-        grid.innerHTML='';
-        for(let book of books){
-            const card = document.createElement('div');
-            card.className = 'book-card';
-            card.innerHTML = `<div class="book-cover" style="background:${book.coverColor||'#333'}"><i class="fas fa-book"></i></div><div class="book-info"><h3>${escapeHtml(book.title)}</h3><p class="author">${escapeHtml(book.author)}</p><button class="remove-bookmark" data-bookid="${book.id}" style="margin-top:0.5rem;background:none;border:1px solid var(--border);padding:0.2rem 0.6rem;cursor:pointer;border-radius:4px;color:var(--text-muted)"><i class="fas fa-trash"></i> Remove</button></div>`;
-            card.querySelector('.book-cover').addEventListener('click', (e) => { e.stopPropagation(); window.location.href=`reader.html?chapter=${bookmarks.find(b=>b.bookId===book.id)?.chapterId||''}`; });
-            grid.appendChild(card);
-        }
-        document.querySelectorAll('.remove-bookmark').forEach(btn=>{
-            btn.addEventListener('click', async (e)=>{
-                e.stopPropagation();
-                const bookId = btn.dataset.bookid;
-                const bookmarkDoc = await db.collection('bookmarks').where('userId','==',currentUser.uid).where('bookId','==',bookId).get();
-                bookmarkDoc.forEach(d=>d.ref.delete());
-                btn.closest('.book-card').remove();
-                if(grid.children.length===0) grid.innerHTML='<div class="empty-state">Your library is empty now.</div>';
-                else showToast('Removed from your library');
-            });
-        });
+
+        document.getElementById('loginWall').style.display = 'none';
+        document.getElementById('dashMain').style.display  = 'block';
+
+        populateBanner(user);
+        loadAll(user);
     }
 
-    function showToast(msg){ const t=document.getElementById('toast')|| (()=>{const d=document.createElement('div'); d.id='toast'; d.className='toast'; document.body.appendChild(d); return d;})(); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
-    function updateAuthUI(user){ const btn=document.getElementById('authBtn'); if(!btn) return; if(user){ btn.innerHTML=user.photoURL?`<img src="${user.photoURL}"> ${user.displayName?.split(' ')[0]||'User'}`:`<i class="fas fa-user-circle"></i> ${user.displayName?.split(' ')[0]||'User'}`; } else btn.innerHTML='<i class="fab fa-google"></i> Sign in'; }
-    function updateDashboardLink(){ const link=document.getElementById('dashboardLink'); if(link) link.style.display=currentUser?'flex':'none'; }
-    window.handleAuthClick=function(){ if(currentUser) document.getElementById('userMenu')?.classList.toggle('open'); else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(()=>alert('Sign in failed')); };
-    window.signOut=function(){ auth.signOut().then(()=>window.location.href='index.html'); };
-    function escapeHtml(str){ if(!str) return ''; return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-    // search redirect
-    document.getElementById('searchBtn')?.addEventListener('click',()=>{ const q=document.getElementById('searchInput')?.value.trim(); if(q) window.location.href=`library.html?search=${encodeURIComponent(q)}`; else window.location.href='library.html'; });
-    document.getElementById('searchInput')?.addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('searchBtn').click(); });
-    // hamburger
-    const mb=document.getElementById('mobileMenuBtn'), nl=document.getElementById('navLinks');
-    if(mb) mb.onclick=()=>nl.classList.toggle('open');
-    document.addEventListener('DOMContentLoaded',()=>{ loadSavedTheme(); buildThemeSwitcher('themeSwitcherMount'); });
+    // ── BANNER ────────────────────────────────────────────
+    async function populateBanner(user) {
+        document.getElementById('bannerEmail').textContent = user.email || '—';
+
+        // Load profile from Firestore
+        try {
+            const doc = await db.collection('userProfiles').doc(user.uid).get();
+            const data = doc.exists ? doc.data() : {};
+
+            const name = data.displayName || user.displayName || 'Reader';
+            document.getElementById('bannerName').textContent = name;
+            document.getElementById('fieldName').value        = name;
+            document.getElementById('fieldEmail').value       = user.email || '';
+
+            if (data.bio) {
+                document.getElementById('bannerBio').textContent = data.bio;
+                document.getElementById('bannerBio').classList.remove('placeholder');
+                document.getElementById('fieldBio').value = data.bio;
+            }
+
+            if (data.photoUrl) {
+                document.getElementById('avatarEl').innerHTML = `<img src="${data.photoUrl}" alt="avatar">`;
+            } else if (user.photoURL) {
+                document.getElementById('avatarEl').innerHTML = `<img src="${user.photoURL}" alt="avatar">`;
+            }
+        } catch (err) { console.error(err); }
+    }
+
+    // ── LOAD ALL DATA ─────────────────────────────────────
+    async function loadAll(user) {
+        await Promise.all([
+            loadSaved(user),
+            loadComments(user),
+            loadRatings(user)
+        ]);
+    }
+
+    // ── SAVED BOOKS ───────────────────────────────────────
+    async function loadSaved(user) {
+        const grid = document.getElementById('savedGrid');
+        try {
+            const snap = await db.collection('savedBooks').where('userId', '==', user.uid).get();
+            savedBookIds = snap.docs.map(d => d.data().bookId);
+
+            document.getElementById('statSaved').textContent  = savedBookIds.length;
+            document.getElementById('bannerSaved').textContent = `${savedBookIds.length} saved`;
+
+            const savedList = allBooks.filter(b => savedBookIds.includes(b.id));
+
+            if (savedList.length === 0) {
+                grid.innerHTML = `
+                    <div class="dash-empty" style="grid-column:1/-1">
+                        <i class="fas fa-bookmark"></i>
+                        <p>No saved books yet.</p>
+                        <a href="library.html"><i class="fas fa-book-open"></i> Browse Library</a>
+                    </div>`;
+                return;
+            }
+
+            grid.innerHTML = '';
+            savedList.forEach(book => {
+                const card = document.createElement('div');
+                card.className = 'saved-book-card';
+                card.innerHTML = `
+                    <button class="unsave-btn" onclick="unsaveBook(event,'${book.id}')" title="Remove">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <div class="saved-book-cover" style="background:${book.coverColor || 'linear-gradient(135deg,#1a1a2e,#16213e)'}">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="saved-book-info">
+                        <h4>${escHtml(book.title)}</h4>
+                        <p>by ${escHtml(book.author)}</p>
+                    </div>`;
+                card.querySelector('.saved-book-cover').onclick = () => window.location.href = 'library.html';
+                card.querySelector('.saved-book-info').onclick  = () => window.location.href = 'library.html';
+                grid.appendChild(card);
+            });
+        } catch (err) {
+            grid.innerHTML = '<div class="dash-empty" style="grid-column:1/-1"><i class="fas fa-exclamation-circle"></i><p>Could not load saved books.</p></div>';
+        }
+    }
+
+    async function unsaveBook(e, bookId) {
+        e.stopPropagation();
+        if (!currentUser) return;
+        try {
+            await db.collection('savedBooks').doc(`${currentUser.uid}_${bookId}`).delete();
+            showToast('Removed from library');
+            loadSaved(currentUser);
+        } catch (err) { showToast('Error removing book'); }
+    }
+
+    // ── COMMENTS ──────────────────────────────────────────
+    async function loadComments(user) {
+        const list = document.getElementById('activityComments');
+        try {
+            const snap = await db.collection('comments').where('userId', '==', user.uid).get();
+            const comments = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                .sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+            document.getElementById('statComments').textContent = comments.length;
+
+            if (comments.length === 0) {
+                list.innerHTML = '<div class="dash-empty"><i class="fas fa-comment"></i><p>No comments yet.</p></div>';
+                return;
+            }
+
+            list.innerHTML = '';
+            comments.slice(0, 8).forEach(c => {
+                const row = document.createElement('div');
+                row.className = 'activity-row';
+                row.innerHTML = `
+                    <div class="activity-dot comment"></div>
+                    <div class="activity-main">
+                        <div class="activity-text">"${escHtml(c.text.substring(0,70))}${c.text.length > 70 ? '...' : ''}"</div>
+                    </div>
+                    <div class="activity-time">${formatDate(c.createdAt)}</div>`;
+                list.appendChild(row);
+            });
+        } catch (err) {
+            list.innerHTML = '<div class="dash-empty"><i class="fas fa-exclamation-circle"></i><p>Could not load comments.</p></div>';
+        }
+    }
+
+    // ── RATINGS ───────────────────────────────────────────
+    async function loadRatings(user) {
+        const list = document.getElementById('activityRatings');
+        try {
+            const snap = await db.collection('ratings').where('userId', '==', user.uid).get();
+            const ratings = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+            document.getElementById('statRatings').textContent = ratings.length;
+
+            if (ratings.length === 0) {
+                list.innerHTML = '<div class="dash-empty"><i class="fas fa-star"></i><p>No ratings yet.</p></div>';
+                return;
+            }
+
+            list.innerHTML = '';
+            ratings.forEach(r => {
+                const book  = allBooks.find(b => b.id === r.bookId);
+                const stars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+                const row   = document.createElement('div');
+                row.className = 'activity-row';
+                row.innerHTML = `
+                    <div class="activity-dot rating"></div>
+                    <div class="activity-main">
+                        <div class="activity-text">
+                            <strong>${book ? escHtml(book.title) : 'Unknown book'}</strong>
+                        </div>
+                    </div>
+                    <div class="activity-time" style="color:var(--text-muted);letter-spacing:0.05em">${stars}</div>`;
+                list.appendChild(row);
+            });
+        } catch (err) {
+            list.innerHTML = '<div class="dash-empty"><i class="fas fa-exclamation-circle"></i><p>Could not load ratings.</p></div>';
+        }
+    }
+
+    // ── PROFILE SAVE ──────────────────────────────────────
+    async function saveProfile() {
+        if (!currentUser) return;
+        const name = document.getElementById('fieldName').value.trim();
+        const bio  = document.getElementById('fieldBio').value.trim();
+
+        try {
+            await db.collection('userProfiles').doc(currentUser.uid).set(
+                { displayName: name, bio, updatedAt: new Date().toISOString() },
+                { merge: true }
+            );
+
+            document.getElementById('bannerName').textContent = name || currentUser.displayName;
+
+            const bioEl = document.getElementById('bannerBio');
+            if (bio) {
+                bioEl.textContent = bio;
+                bioEl.classList.remove('placeholder');
+            } else {
+                bioEl.textContent = 'No bio yet — add one below.';
+                bioEl.classList.add('placeholder');
+            }
+
+            showToast('Profile saved!');
+            switchTab('library');
+        } catch (err) { showToast('Error saving profile'); }
+    }
+
+    // ── AVATAR ────────────────────────────────────────────
+    function handleAvatarUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const dataUrl = e.target.result;
+            document.getElementById('avatarEl').innerHTML = `<img src="${dataUrl}" alt="avatar">`;
+            try {
+                await db.collection('userProfiles').doc(currentUser.uid).set(
+                    { photoUrl: dataUrl, updatedAt: new Date().toISOString() },
+                    { merge: true }
+                );
+                showToast('Photo updated!');
+            } catch (err) { showToast('Error saving photo'); }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // ── TABS ──────────────────────────────────────────────
+    function switchTab(tabName) {
+        document.querySelectorAll('.dash-tab').forEach(t => {
+            t.classList.toggle('active', t.dataset.tab === tabName);
+        });
+        document.querySelectorAll('.dash-panel').forEach(p => {
+            p.classList.toggle('active', p.id === `panel-${tabName}`);
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ── UTILS ─────────────────────────────────────────────
+    function escHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '';
+        return new Date(dateStr).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+    }
 </script>
 </body>
 </html>
