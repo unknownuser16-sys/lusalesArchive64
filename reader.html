@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reading — Lusales Archive</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&family=Calibri:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght=0,400;0,700;1,400&family=Lora:ital,wght=0,400;0,500;1,400&family=Calibri:wght@400;600&display=swap" rel="stylesheet">
     <script>(function(){const t=localStorage.getItem('lusales_theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
     <style>
         /* ── THEME VARS ── */
@@ -159,22 +159,47 @@
 
         .chapter-meta-item { display: flex; align-items: center; gap: 0.35rem; }
 
-        /* ── CHAPTER BODY ── */
-        .chapter-body p {
+        /* ── WORD-DOCUMENT STYLE SEGMENTS ── */
+        .book-page-segment {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 3rem;
+            margin-bottom: 2.5rem;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+
+        .book-page-segment p {
             margin-bottom: 1.65em;
             text-indent: 2.2em;
             color: var(--text);
             font-size: inherit;
         }
 
-        .chapter-body p:first-child { text-indent: 0; }
+        .book-page-segment p:last-child {
+            margin-bottom: 0;
+        }
 
-        /* Drop cap */
-        .chapter-body p:first-child::first-letter {
+        /* Drop cap only on page 1, first paragraph */
+        .book-page-segment[data-page-index="1"] p:first-child { text-indent: 0; }
+        .book-page-segment[data-page-index="1"] p:first-child::first-letter {
             font-family: var(--font-display);
             font-size: 4rem; font-weight: 700;
             color: var(--text); float: left;
             line-height: 0.72; margin-right: 0.06em; margin-top: 0.1em;
+        }
+
+        /* Page Number Badge inside the section */
+        .page-number-footer {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px dashed var(--border);
+            text-align: center;
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            letter-spacing: 0.05em;
         }
 
         /* ── CHAPTER DIVIDER ── */
@@ -414,7 +439,9 @@
 
         /* ── RESPONSIVE ── */
         @media (max-width: 768px) {
-            .reader-page { padding: 80px 1.5rem 80px; max-width: 100%; }
+            body { font-size: 1rem; line-height: 1.75; } /* Slightly lower font base size for crisp mobile reads */
+            .reader-page { padding: 80px 1rem 80px; max-width: 100%; }
+            .book-page-segment { padding: 1.5rem; margin-bottom: 1.75rem; } /* Compact paddings for modern document feel on smaller displays */
             .bar-title { display: none; }
             .reader-bar { padding: 0 1rem; }
             .nav-title { max-width: 110px; }
@@ -425,7 +452,6 @@
 </head>
 <body>
 
-<!-- Loading -->
 <div class="loading-screen" id="loadingScreen">
     <div class="loading-inner">
         <i class="fas fa-book-open"></i>
@@ -433,7 +459,6 @@
     </div>
 </div>
 
-<!-- Top bar -->
 <div class="reader-bar" id="readerBar">
     <div class="bar-left">
         <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i> Back</button>
@@ -452,11 +477,9 @@
     </div>
 </div>
 
-<!-- Progress -->
 <div class="progress-bar" id="progressBar"></div>
 <div class="toast" id="toast"></div>
 
-<!-- Reader -->
 <div class="reader-page" id="readerPage" style="display:none">
 
     <div class="chapter-header">
@@ -478,7 +501,6 @@
 
     <div class="chapter-divider">— ✦ —</div>
 
-    <!-- Chapter nav -->
     <div class="chapter-nav">
         <button class="nav-btn disabled" id="prevBtn" onclick="navigateChapter(-1)">
             <i class="fas fa-chevron-left"></i>
@@ -496,13 +518,11 @@
         </button>
     </div>
 
-    <!-- Interaction section — ratings + comments -->
     <div class="interaction-section">
         <div class="interaction-title">
             <i class="fas fa-star"></i> Rate &amp; Comment
         </div>
 
-        <!-- Rating -->
         <div class="rating-block">
             <div class="rating-block-left">
                 <h4>Rate this book</h4>
@@ -520,7 +540,6 @@
             </div>
         </div>
 
-        <!-- Comments -->
         <div class="comments-header">
             <h4>Comments</h4>
             <span class="comments-count" id="commentsCount"></span>
@@ -535,7 +554,6 @@
 
 </div>
 
-<!-- Error -->
 <div class="error-screen" id="errorScreen">
     <i class="fas fa-book"></i>
     <h2>Chapter not found</h2>
@@ -557,14 +575,18 @@
     let currentUser     = null;
     let isBookmarked    = false;
     let userRating      = 0;
+    
+    // Track reading position state
+    let chapterIdParam  = null;
+    let autoScrollReady = false;
 
     document.addEventListener('DOMContentLoaded', async () => {
         loadSavedTheme();
         buildThemeSwitcher('readerThemeMount');
 
         const params    = new URLSearchParams(window.location.search);
-        const chapterId = params.get('chapter');
-        if (!chapterId) { showError(); return; }
+        chapterIdParam  = params.get('chapter');
+        if (!chapterIdParam) { showError(); return; }
 
         auth.onAuthStateChanged(async user => {
             currentUser = user;
@@ -578,7 +600,7 @@
         });
 
         try {
-            const chapDoc = await db.collection('chapters').doc(chapterId).get();
+            const chapDoc = await db.collection('chapters').doc(chapterIdParam).get();
             if (!chapDoc.exists) { showError(); return; }
             currentChapter = { id: chapDoc.id, ...chapDoc.data() };
 
@@ -590,7 +612,7 @@
             allBookChapters = chapSnap.docs
                 .map(d => ({ id: d.id, ...d.data() }))
                 .sort((a,b) => new Date(a.date) - new Date(b.date));
-            currentIndex = allBookChapters.findIndex(c => c.id === chapterId);
+            currentIndex = allBookChapters.findIndex(c => c.id === chapterIdParam);
 
             renderChapter(currentChapter, currentBook);
             setupProgressBar();
@@ -599,6 +621,11 @@
             loadRatings();
             loadComments();
             fadeOutLoader();
+            
+            // Listen for scroll shifts to continuously track reader location
+            setupActivePageTracking();
+            // Automatically jump back to where the user left off
+            restoreReadingPosition();
 
         } catch (err) {
             console.error(err);
@@ -643,7 +670,7 @@
     }
 
     function updateBookmarkBtn() {
-        const btn  = document.getElementById('bookmarkBtn');
+        const btn = document.getElementById('bookmarkBtn');
         if (!btn) return;
         const icon = btn.querySelector('i');
         if (isBookmarked) { icon.className = 'fas fa-bookmark'; btn.classList.add('active'); }
@@ -840,7 +867,7 @@
         } catch (err) { showToast('Error deleting comment'); }
     }
 
-    // ── RENDER ────────────────────────────────────────────
+    // ── RENDER WITH WORD DOCUMENT PAGINATION ──────────────────
     function renderChapter(chapter, book) {
         document.title = `${chapter.title} — Lusales Archive`;
 
@@ -858,14 +885,99 @@
         if (rtEl) rtEl.textContent = `${minutes} min read`;
 
         const body = document.getElementById('chapterBody');
-        const paragraphs = chapter.content.split('\n').filter(p => p.trim())
-            .map(p => `<p>${escHtml(p)}</p>`).join('');
-        body.innerHTML = paragraphs || `<p>${escHtml(chapter.content)}</p>`;
+        body.innerHTML = ''; 
+
+        // Split up long text string into paragraphs
+        const lines = chapter.content.split('\n').filter(p => p.trim());
+        
+        let currentPageWords = 0;
+        let currentPageParagraphs = [];
+        let globalPageIndex = 1;
+
+        // Loop through lines, pushing to segments every ~350 words max
+        lines.forEach((line) => {
+            const lineWordCount = line.split(/\s+/).length;
+            
+            if (currentPageWords + lineWordCount > 350 && currentPageParagraphs.length > 0) {
+                // Render completed page segment container
+                const pContainer = createPageElement(currentPageParagraphs, globalPageIndex);
+                body.appendChild(pContainer);
+                
+                globalPageIndex++;
+                currentPageParagraphs = [line];
+                currentPageWords = lineWordCount;
+            } else {
+                currentPageParagraphs.push(line);
+                currentPageWords += lineWordCount;
+            }
+        });
+
+        // Don't leave out final leftover text lines
+        if (currentPageParagraphs.length > 0) {
+            const pContainer = createPageElement(currentPageParagraphs, globalPageIndex);
+            body.appendChild(pContainer);
+        }
+
         body.style.fontSize = `${fontSize}rem`;
 
         updateNavButtons();
         document.getElementById('readerPage').style.display = 'block';
-        window.scrollTo(0, 0);
+    }
+
+    function createPageElement(paragraphsArray, indexNumber) {
+        const div = document.createElement('div');
+        div.className = 'book-page-segment';
+        div.setAttribute('data-page-index', indexNumber);
+        div.id = `book-page-${indexNumber}`;
+        
+        const innerContent = paragraphsArray.map(p => `<p>${escHtml(p)}</p>`).join('');
+        
+        div.innerHTML = `
+            ${innerContent}
+            <div class="page-number-footer">Page ${indexNumber}</div>
+        `;
+        return div;
+    }
+
+    // ── AUTOMATIC LAST READ CONTINUATION FEATURES ──────────────────
+    function setupActivePageTracking() {
+        window.addEventListener('scroll', () => {
+            if (!autoScrollReady) return; // Prevent logging states during auto-adjusting setup jumps
+            
+            const segments = document.querySelectorAll('.book-page-segment');
+            let currentVisiblePage = 1;
+            
+            segments.forEach(seg => {
+                const rect = seg.getBoundingClientRect();
+                // If top of segment crosses upper middle screen, consider it read/viewed
+                if (rect.top <= window.innerHeight * 0.4) {
+                    currentVisiblePage = seg.getAttribute('data-page-index');
+                }
+            });
+            
+            // Save state per Chapter ID
+            if (chapterIdParam) {
+                localStorage.setItem(`last_page_${chapterIdParam}`, currentVisiblePage);
+            }
+        });
+    }
+
+    function restoreReadingPosition() {
+        setTimeout(() => {
+            if (chapterIdParam) {
+                const savedPage = localStorage.getItem(`last_page_${chapterIdParam}`);
+                if (savedPage) {
+                    const targetSeg = document.getElementById(`book-page-${savedPage}`);
+                    if (targetSeg) {
+                        targetSeg.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        showToast(`Resumed from Page ${savedPage}`);
+                    }
+                } else {
+                    window.scrollTo(0, 0);
+                }
+            }
+            autoScrollReady = true;
+        }, 600); // Small threshold delay allows dynamic DOM building elements to settle cleanly
     }
 
     function updateNavButtons() {
