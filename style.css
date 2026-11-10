@@ -376,12 +376,12 @@ img { max-width: 100%; display: block; }
    HERO
    ============================================================ */
 .hero {
-    min-height: 100vh;
+    min-height: 72vh;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: calc(var(--nav-height) + 2rem) 2rem 4rem;
+    padding: calc(var(--nav-height) + 2rem) 2rem 3rem;
     position: relative;
 }
 
@@ -777,4 +777,81 @@ footer p { font-family: var(--font-ui); font-size: 0.8rem; color: var(--text-dim
 
 @media (max-width: 480px) {
     .container { padding: 0 1rem; }
+}
+
+
+/* ============================================================
+   HOME PAGE SECTIONS (books shelf + latest chapters)
+   ============================================================ */
+.home-section { padding: 2.5rem 0 1.5rem; }
+.home-section:last-of-type { padding-bottom: 5rem; }
+
+.section-link {
+    font-family: var(--font-ui);
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    transition: color 0.2s;
+}
+.section-link:hover { color: var(--text); }
+
+/* Horizontal row of covers that scrolls sideways on small screens */
+.shelf {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 180px;
+    gap: 1.25rem;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
+.shelf .empty-state { grid-column: auto; grid-row: auto; width: 100%; }
+
+.shelf-book {
+    display: block;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    scroll-snap-align: start;
+    transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+}
+
+.shelf-book:hover,
+.shelf-book:focus-visible {
+    transform: translateY(-4px);
+    border-color: var(--accent-dim);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+    outline: none;
+}
+
+.shelf-book .book-cover { height: 240px; }
+
+/* Make list entries (now links) keep their text colour and show keyboard focus */
+a.chapter-entry { color: inherit; }
+a.chapter-entry:focus-visible { outline: 2px solid var(--accent-dim); outline-offset: 2px; }
+
+/* Placeholders shown while stories load */
+.shelf-skeleton, .list-skeleton {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    animation: homePulse 1.4s ease-in-out infinite;
+}
+.shelf-skeleton { height: 330px; }
+.list-skeleton  { height: 62px; }
+
+@keyframes homePulse { 50% { opacity: 0.45; } }
+
+@media (prefers-reduced-motion: reduce) {
+    .shelf-skeleton, .list-skeleton { animation: none; }
+    .shelf-book, .shelf-book:hover { transition: none; transform: none; }
+}
+
+@media (max-width: 480px) {
+    .shelf { grid-auto-columns: 150px; }
+    .shelf-book .book-cover { height: 200px; }
+    .shelf-skeleton { height: 290px; }
 }
